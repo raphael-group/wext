@@ -9,8 +9,6 @@ def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('-mf', '--maf_file', type=str, required=True)
     parser.add_argument('-hf', '--hypermutators_file', type=str, required=False, default=None)
-    parser.add_argument('-lf', '--gene_length_file', type=str, required=False,
-                        default='/data/compbio/datasets/GenomeInfo/gene_length/max-transcripts-length-per-gene.tsv')
     parser.add_argument('-ivc', '--ignored_variant_classes', type=str, required=False, nargs='*',
                         default=["Silent", "Intron", "3'UTR", "5'UTR", "IGR", "lincRNA"])
     parser.add_argument('-ivt', '--ignored_variant_types', type=str, required=False, nargs='*',
@@ -18,22 +16,19 @@ def get_parser():
     parser.add_argument('-ivs', '--ignored_validation_statuses', type=str, required=False, nargs='*',
                         default=['Wildtype', 'Invalid'])
     parser.add_argument('-o', '--output_file', type=str, required=True)
+    parser.add_argument('-v', '--verbose', type=int, default=1, required=False, choices=range(5))
     return parser
 
 def run( args ):
-    # Load the gene lengths, and remove genes with no length
-    with open(args.gene_length_file, 'r') as IN:
-        arrs = [ l.rstrip('\n').split('\t') for l in IN if not l.startswith('#') ]
-        geneToLength = dict( (arr[0], int(arr[1])) for arr in arrs )
-
     # Load the mutations from the MAF
+    if args.verbose > 0: print '* Loading the MAF...'
     with open(args.maf_file, 'r') as IN:
         geneToCases, patientToMutations = defaultdict( set ), defaultdict( set )
         seenHeader = False
         ignored_var_classes  = set(map(str.lower, args.ignored_variant_classes))
         ignored_var_types    = set(map(str.lower, args.ignored_variant_types))
         ignored_val_statuses = set(map(str.lower, args.ignored_validation_statuses))
-        genes, patients, var_classes, var_types, val_statuses, no_length = set(), set(), set(), set(), set(), set()
+        genes, patients, var_classes, var_types, val_statuses = set(), set(), set(), set(), set()
         for l in IN:
             arr = l.rstrip('\n').split('\t')
             # Parse the header if we haven't seen it yet
@@ -49,9 +44,6 @@ def run( args ):
             else:
                 # Record the patients and genes, even if we ignore their mutations
                 patient, gene = '-'.join(arr[patient_index].split('-')[:3]), arr[gene_index]
-                if gene not in geneToLength:
-                    no_length.add(gene)
-                    continue
                 
                 patients.add(patient)
                 genes.add(gene)
@@ -73,7 +65,6 @@ def run( args ):
     genes        = sorted(genes)
     num_patients = len(patients)
     num_genes    = len(genes)
-    total_mutations = float(sum( len(cases) for g, cases in geneToCases.iteritems() ))
 
     # Load the hypermutators    
     if args.hypermutators_file:
@@ -82,19 +73,13 @@ def run( args ):
     else:
         hypermutators = set()
 
-    # Compute per patient and per gene mutation rates
-    patient_counts  = np.array([ len(patientToMutations[p]) for p in patients ])
-    patient_weights = patient_counts / float(total_mutations)
-    gene_lengths    = np.array([ geneToLength[g] for g in genes ])
-    gene_weights    = gene_lengths / float(np.sum(gene_lengths))
-    
-    print '\tGenes: {} ({} with no length ignored)'.format(num_genes, len(no_length))
-    print '\tPatients: {} ({} hypermutators)'.format(num_patients, len(hypermutators))
-    print '\tVariant classes:', ', '.join(sorted(var_classes))
-    print '\tVariant types:', ', '.join(sorted(var_types))
-    print '\tValidation statuses:', ', '.join(sorted(val_statuses))
-    print '\tPatient weights: [{}, {}, {}]'.format(np.min(patient_weights), np.median(patient_weights), np.max(patient_weights))
-    print '\tGene lengths: [{}, {}, {}]'.format(np.min(gene_lengths), np.median(gene_lengths), np.max(gene_lengths))
+    # Summarize the data
+    if args.verbose > 0:
+        print '\tGenes: {}'.format(num_genes)
+        print '\tPatients: {} ({} hypermutators)'.format(num_patients, len(hypermutators))
+        print '\tVariant classes:', ', '.join(sorted(var_classes))
+        print '\tVariant types:', ', '.join(sorted(var_types))
+        print '\tValidation statuses:', ', '.join(sorted(val_statuses))
     
     # Output to file
     with open(args.output_file, 'w') as OUT:
@@ -102,7 +87,7 @@ def run( args ):
                       hypermutators_file=os.path.abspath(args.hypermutators_file) if args.hypermutators_file else None)
         output = dict(params=params, patients=patients, genes=genes, hypermutators=list(hypermutators),
                       geneToCases=dict( (g, list(cases)) for g, cases in geneToCases.items()),
-                      patient_weights=patient_weights.tolist(), gene_weights=gene_weights.tolist(),
+                      patientToMutations=dict( (p, list(muts)) for p, muts in patientToMutations.items()),
                       num_genes=num_genes, num_patients=num_patients)
         json.dump( output, OUT )
     

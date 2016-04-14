@@ -4,19 +4,20 @@ import os, json
 from constants import *
 
 # Load mutation data from one of our processed JSON file
-def load_mutation_data( mutation_file, min_freq ):
+def load_mutation_data( mutation_file, min_freq=1 ):
     with open(mutation_file, 'r') as IN:
         obj         = json.load(IN)
         all_genes   = obj['genes']
         patients    = obj['patients']
         geneToCases = dict( (g, set(cases)) for g, cases in obj['geneToCases'].iteritems() )
+        patientToMutations = dict( (p, set(muts)) for p, muts in obj['patientToMutations'].iteritems() )
         hypermutators = set(obj['hypermutators'])
         params      = obj['params']
 
     # Restrict the genes based on the minimum frequency
     genes = set( g for g, cases in geneToCases.iteritems() if len(cases) >= min_freq )
         
-    return genes, all_genes, patients, geneToCases, params, hypermutators
+    return genes, all_genes, patients, geneToCases, patientToMutations, params, hypermutators
 
 # Converts keys from an iterable to tab-separated, so the dictionary can be
 # output as JSON

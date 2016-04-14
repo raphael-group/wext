@@ -33,7 +33,7 @@ def run( args ):
         print '* Loading mutation data...'
         
     mutation_data = load_mutation_data( args.mutation_file, args.min_frequency )
-    genes, all_genes, patients, geneToCases, params, hypermutators = mutation_data
+    genes, all_genes, patients, geneToCases, patientToMutations, params, hypermutators = mutation_data
     num_all_genes, num_genes, num_patients = len(all_genes), len(genes), len(patients)
     geneToIndex = dict(zip(all_genes, range(num_all_genes)))
     

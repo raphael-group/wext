@@ -3,6 +3,11 @@
 # Load required modules
 import sys, os, argparse, json, numpy as np, multiprocessing as mp
 
+# Load the weighted enrichment test, ensuring that
+# it is in the path (unless this script was moved)
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
+from weighted_exclusivity_test import *
+
 def get_parser():
     # Parse arguments
     parser = argparse.ArgumentParser()
@@ -11,6 +16,7 @@ def get_parser():
     parser.add_argument('-np', '--num_permutations', required=True, type=int)
     parser.add_argument('-nc', '--num_cores', required=False, default=1, type=int)
     parser.add_argument('-o', '--output_file', type=str, required=True)
+    parser.add_argument('-v', '--verbose', type=int, required=False, default=1, choices=range(5))
     return parser
 
 def compute_observed(mutation_files, geneToIndex, patientToIndex):
@@ -38,15 +44,18 @@ def run( args ):
     if args.verbose > 0:
         print '* Loading mutation data...'
         
-    mutation_data = load_mutation_data( args.mutation_file, args.min_frequency )
-    genes, all_genes, patients, geneToCases, params, hypermutators = mutation_data
+    mutation_data = load_mutation_data( args.mutation_file )
+    genes, all_genes, patients, geneToCases, patientToMutations, params, hypermutators = mutation_data
     num_all_genes, num_genes, num_patients = len(all_genes), len(genes), len(patients)
     geneToIndex = dict(zip(all_genes, range(num_all_genes)))
+    patientToIndex = dict(zip(patients, range(num_patients)))
+    geneToObserved = dict( (g, len(cases)) for g, cases in geneToCases.iteritems() )
+    patientToObserved = dict( (p, len(muts)) for p, muts in patientToMutations.iteritems() )
     
     if args.verbose > 0:
         print '\tGenes:', num_all_genes
         print '\tPatients:', num_patients
-        print '\tGenes mutated in >={} patients: {}'.format(args.min_frequency, num_genes)
+        print '\tGenes mutated in at least one patient: {}'.format(num_genes)
         
     # Get the list of files we want to consider
     permuted_files = args.permuted_files[:args.num_permutations]
