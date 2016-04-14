@@ -4,7 +4,7 @@
 import sys, os, argparse, numpy as np, json
 from itertools import combinations
 
-# Load the weighted enrichment test, ensuring that
+# Load the weighted exclusivity test, ensuring that
 # it is in the path (unless this script was moved)
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 from weighted_exclusivity_test import *
@@ -17,14 +17,22 @@ def get_parser():
     parser.add_argument('-f', '--min_frequency', type=int, default=1, required=False)
     parser.add_argument('-k', '--gene_set_size', type=int, required=True,
         choices=SET_SIZES_IMPLEMENTED)
-    parser.add_argument('-tn', '--test', choices=TEST_NAMES, required=True)
-    parser.add_argument('-mn', '--method', choices=METHOD_NAMES, required=True)
     parser.add_argument('-nc', '--num_cores', type=int, required=False, default=1)
     parser.add_argument('-v', '--verbose', type=int, required=False, default=1, choices=range(5))
 
     # Subparsers
-    parser.add_argument('-wf', '--weights_file', type=str, required=True)
-    parser.add_argument('-np', '--num_permutations', type=int, required=False)
+    subparsers = parser.add_subparsers(dest='test', help='Type of test')
+
+    permutational_parser = subparsers.add_parser("Permutational")
+    permutational_parser.add_argument('-np', '--num_permutations', type=int, required=False)
+
+    weighted_parser = subparsers.add_parser("Weighted")
+    weighted_parser.add_argument('-m', '--method', choices=METHOD_NAMES, type=str, required=True)
+    weighted_parser.add_argument('-wf', '--weights_file', type=str, required=True)
+
+    unweighted_parser = subparsers.add_parser("Unweighted")
+    unweighted_parser.add_argument('-m', '--method', choices=METHOD_NAMES, type=str, required=True)
+    
     return parser
 
 def run( args ):
@@ -59,6 +67,7 @@ def run( args ):
                                                             args.num_cores)
 
     # Output to file
-    output_table( args, setToPval, setToRuntime, setToFDR, setToObs )
+    json_format = args.output_file.lower().endswith('.json')
+    output_table( args, setToPval, setToRuntime, setToFDR, setToObs, json=json_format )
 
 if __name__ == '__main__': run( get_parser().parse_args(sys.argv[1:]) )

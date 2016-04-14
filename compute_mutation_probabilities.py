@@ -87,7 +87,10 @@ def run( args ):
         
     for p, obs in patientToObserved.iteritems():
         assert( np.abs(P[:, patientToIndex[p]].sum() - obs) < 0.1)
-    
+
+    # Add pseudocounts to entries with no mutations observed
+    P[P == 0] = 1./(2. * len(permuted_files))
+            
     # Output to file.
     # The rows/columns preserve the order given by the mutation file.
     np.save(args.output_file, P)

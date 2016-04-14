@@ -1,7 +1,7 @@
 # Load required modules
 library(BiRewire)
 library(igraph)
-permute <- function (inputFile, outputDirectory, numPermutations, start_index=0, exact=TRUE, header=FALSE){
+permute <- function (inputFile, outputDirectory, numPermutations, start_index=1, exact=TRUE, header=FALSE){
 	# Read the graph and convert it to bipartite
 	edgelist <- read.table(inputFile, heade=header)
 	G <- graph.data.frame(edgelist)
@@ -11,7 +11,7 @@ permute <- function (inputFile, outputDirectory, numPermutations, start_index=0,
 	M <- get.incidence(G)
 	
 	# Generate a permutation per 
-	for (i in 1:numPermutations ){
+	for (i in 0:(numPermutations-1) ){
 		P <- birewire.rewire.bipartite(M, exact=exact)
 		H <- graph.incidence(P)
 		write.graph(H,

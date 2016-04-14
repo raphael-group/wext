@@ -34,10 +34,10 @@ def create_tbl_header( k ):
     return '\t'.join([ bin_format.format(i) for i in range(2**k) ])
 
 # Output a run to file as a table or JSON file
-def output_table(args, setToPval, setToRuntime, setToFDR, setToObs ):
+def output_table(args, setToPval, setToRuntime, setToFDR, setToObs, json=False ):
     with open(args.output_file, 'w') as OUT:
         # Tab-separated
-        if args.output_file.lower().endswith('.tsv'):
+        if not json:
             # Construct the rows
             rows = []
             for M, pval in setToPval.iteritems():
