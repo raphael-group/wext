@@ -37,7 +37,7 @@ You can install the BiRewire R module following the instructions on [their websi
 
 #### Optional ####
 
-The CoMEt Python module is required to compute the exact version of the unweighted test. By default, the weighted exclusivity test expects CoMEt to be install in `third-party/comet`. You can install and setup the latest version of CoMEt using the following commands:
+The [CoMEt Python module](https://github.com/raphael-group/comet) is required to compute the exact version of the unweighted test. By default, the weighted exclusivity test expects CoMEt to be install in `third-party/comet`. You can install and setup the latest version of CoMEt using the following commands:
 
     mkdir third-party
     cd third-party
