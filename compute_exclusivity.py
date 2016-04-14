@@ -24,7 +24,8 @@ def get_parser():
     subparsers = parser.add_subparsers(dest='test', help='Type of test')
 
     permutational_parser = subparsers.add_parser("Permutational")
-    permutational_parser.add_argument('-np', '--num_permutations', type=int, required=False)
+    permutational_parser.add_argument('-np', '--num_permutations', type=int, required=True)
+    permutational_parser.add_argument('-pf', '--permuted_matrix_files', type=str, nargs='*', required=True)
 
     weighted_parser = subparsers.add_parser("Weighted")
     weighted_parser.add_argument('-m', '--method', choices=METHOD_NAMES, type=str, required=True)
@@ -50,21 +51,27 @@ def run( args ):
         print '\tPatients:', num_patients
         print '\tGenes mutated in >={} patients: {}'.format(args.min_frequency, num_genes)
 
-    # Load the weights file
-    P       = np.load(args.weights_file)
-    geneToP = dict( (g, P[geneToIndex[g]]) for g in genes )
-    
     # Create a list of sets to test
     sets = list( frozenset(t) for t in combinations(genes, args.gene_set_size) )
     num_sets = len(sets)
     
     # Test each set
     print '* Testing {} sets...'.format(num_sets)
-    method = nameToMethod[args.method]
     test   = nameToTest[args.test]
-    setToPval, setToRuntime, setToFDR, setToObs = test_sets(sets, geneToCases, num_patients,
-                                                            method, test, geneToP, args.verbose,
-                                                            args.num_cores)
+    if test == PERMUTATIONAL:
+        # Restrict the list of files we're testing
+        permuted_files = args.permuted_matrix_files[:args.num_permutations]
+        print '\tUsing {} permuted matrix files'.format(len(permuted_files))
+
+        # Run the permutational
+        setToPval, setToRuntime, setToFDR, setToObs = permutational_test( sets, geneToCases, num_patients, permuted_files, args.num_cores, args.verbose )
+    else:
+        # Load the weights file and then run the test
+        P       = np.load(args.weights_file)
+        geneToP = dict( (g, P[geneToIndex[g]]) for g in genes )
+        
+        method = nameToMethod[args.method]
+        setToPval, setToRuntime, setToFDR, setToObs = test_sets(sets, geneToCases, num_patients, method, test, geneToP, args.num_cores, args.verbose)
 
     # Output to file
     json_format = args.output_file.lower().endswith('.json')

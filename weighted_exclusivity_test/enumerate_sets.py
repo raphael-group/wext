@@ -1,14 +1,88 @@
 #!/usr/bin/env python
 
 # Load required modules
-import multiprocessing as mp
+import multiprocessing as mp, json
 from time import time
+from collections import defaultdict, Counter
+from math import ceil
 
 # Load local modules
 from exclusivity_tests import weighted_test, unweighted_test
 from constants import *
 from benjamini_hochberg import benjamini_hochberg_correction
 
+################################################################################
+# Permutational test
+################################################################################
+
+# Compute the mutual exclusivity T for the given gene set
+def T(M, geneToCases):
+    sampleToCount = Counter( s for g in M for s in geneToCases.get(g, []) )
+    return sum( 1 for sample, count in sampleToCount.iteritems() if count == 1 )
+
+# Compute the permutational 
+def permutational_dist_wrapper( args ): return permutational_dist( *args )
+def permutational_dist( sets, permuted_files ):
+    setToDist, setToTime = defaultdict(list), defaultdict(int)
+    for pf in permuted_files:
+        # Load the file, keeping track of how long it takes
+        reading_start = time()
+        with open(pf, 'r') as IN:
+            permutedGeneToCases = dict( (g, set(cases)) for g, cases in json.load(IN)['geneToCases'].iteritems() )
+        reading_time = time() - reading_start
+
+        # Iterate through the sets, keeping track of how long
+        # it takes to compute the test statistic
+        for M in sets:
+            start = time()
+            setToDist[M].append( T(M, permutedGeneToCases) )
+            setToTime[M] += reading_time + (time() - start)
+            
+    return setToDist, setToTime
+
+def permutational_test(sets, geneToCases, num_patients, permuted_files, num_cores=1, verbose=0):
+    # Set up the multi-core process
+    num_cores = num_cores if num_cores != -1 else mp.cpu_count()
+    if num_cores != 1:
+        pool = mp.Pool(num_cores)
+        map_fn = pool.map
+    else:
+        map_fn = map
+
+    # Compute the distribution of exclusivity for each pair across the permuted files
+    np    = float(len(permuted_files))
+    args  = [ (sets, permuted_files[i::num_cores]) for i in range(num_cores) ]
+    empirical_distributions = map_fn(permutational_dist_wrapper, args)
+
+    if num_cores != 1:
+        pool.close()
+        pool.join()
+
+    # Merge the different distributions
+    setToDist, setToTime = defaultdict(list), dict()
+    for dist, times in empirical_distributions:
+        setToTime.update(times.items())
+        for k, v in dist.iteritems():
+            setToDist[k].extend(v)
+
+    # Compute the observed values and then the P-values
+    setToObs = dict( (M, observed_values(M, num_patients, geneToCases)) for M in sets )
+    setToPval = dict()
+    for M, (X, T, Z, tbl) in setToObs.iteritems():
+        # Compute the P-value.
+        count = sum( 1. for d in setToDist[M] if d >= T )
+        setToPval[M] = count / np
+
+    # Compute FDRs
+    tested_sets = setToPval.keys()
+    pvals = [ setToPval[M] for M in tested_sets ]
+    setToFDR = dict(zip(tested_sets, benjamini_hochberg_correction(pvals)))
+        
+    return setToPval, setToTime, setToFDR, setToObs
+
+################################################################################
+# Weighted and unweighted tests
+################################################################################
 # Construct a contingency table for an arbitrarily-sized gene set
 def observed_values( M, N, geneToCases ):
     # Construct the table
@@ -51,7 +125,7 @@ def test_set_group( sets, geneToCases, num_patients, method, test, P=None, verbo
             sys.stdout.flush()
 
         # Do some simple mutation processing
-        X, T, Z, tbl = observed_values(sorted(M), num_patients, geneToCases )
+        X, T, Z, tbl = setToObs[M] = observed_values(sorted(M), num_patients, geneToCases )
         
         # Ignore the opposite tail, where we have more co-occurrences than exclusivity
         if Z >= T or tbl[1] == 0 or tbl[2] == 0 or tbl[4] == 0 : continue
@@ -66,7 +140,6 @@ def test_set_group( sets, geneToCases, num_patients, method, test, P=None, verbo
             raise NotImplementedError("Test {} not implemented".format(testToName[test]))
         
         setToTime[M] = time() - start
-        setToObs[M]  = (T, Z, tbl)
 
     if verbose > 1: print
 

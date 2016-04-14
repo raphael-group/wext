@@ -35,22 +35,24 @@ def create_tbl_header( k ):
 
 # Output a run to file as a table or JSON file
 def output_table(args, setToPval, setToRuntime, setToFDR, setToObs, json=False ):
+    is_permutational = nameToTest[args.test] == PERMUTATIONAL
     with open(args.output_file, 'w') as OUT:
         # Tab-separated
         if not json:
             # Construct the rows
             rows = []
             for M, pval in setToPval.iteritems():
-                T, Z, tbl = setToObs[M]
+                X, T, Z, tbl = setToObs[M]
                 row = [ ', '.join(sorted(M)), pval, setToFDR[M], setToRuntime[M], T, Z ] + tbl
                 rows.append( row )
             rows.sort(key=lambda row: row[1]) # sort ascending by P-value
             
             # Create the header
+            method_paren = '' if is_permutational else ' ({})'.format(args.method)
             k = len(rows[0][0].split(', '))
             tbl_header = create_tbl_header( k )
-            header = 'Gene set\t{0} ({1}) P-value\t{0} ({1}) FDR\t{0} ({1}) '\
-                     'Runtime\tT\tZ\t{2}'.format(args.test, args.method, tbl_header)
+            header = 'Gene set\t{0}{1} P-value\t{0}{1} FDR\t{0}{1} '\
+                     'Runtime\tT\tZ\t{2}'.format(args.test, method_paren, tbl_header)
                      
             # Output to file
             OUT.write('#{}\n'.format(header))
@@ -58,9 +60,17 @@ def output_table(args, setToPval, setToRuntime, setToFDR, setToObs, json=False )
             
         # JSON
         else:
-            params = dict(method=args.method, test=args.test, min_frequency=args.min_frequency,
+            # Record the parameters
+            params = dict(test=args.test, min_frequency=args.min_frequency,
                           mutation_file=os.path.abspath(args.mutation_file),
-                          k=args.gene_set_size, weights_file=os.path.abspath(args.weights_file))
+                          k=args.gene_set_size, method=method)
+            if is_permutational:
+                params['permuted_matrix_files'] = args.permuted_matrix_files
+                params['num_permutations']      = args.num_permutations
+            else:
+                params['weights_file'] = os.path.abspath(args.weight_file)
+
+            # Output to file
             output = dict(params=params, setToPval=convert_dict_for_json(setToPval),
                           setToObs=convert_dict_for_json(setToObs),
                           setToFDR=convert_dict_for_json(setToFDR),
