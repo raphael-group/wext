@@ -66,15 +66,19 @@ def run( args ):
         # Run the permutational
         setToPval, setToRuntime, setToFDR, setToObs = permutational_test( sets, geneToCases, num_patients, permuted_files, args.num_cores, args.verbose )
     else:
-        # Load the weights file and then run the test
-        P       = np.load(args.weights_file)
-        geneToP = dict( (g, P[geneToIndex[g]]) for g in genes )
-        
+        # Load the weights file if this is the weighted test
+        if test == WEIGHTED:
+            P       = np.load(args.weights_file)
+            geneToP = dict( (g, P[geneToIndex[g]]) for g in genes )
+        else:
+            geneToP = None
+            
+        # Run the test
         method = nameToMethod[args.method]
         setToPval, setToRuntime, setToFDR, setToObs = test_sets(sets, geneToCases, num_patients, method, test, geneToP, args.num_cores, args.verbose)
 
     # Output to file
     json_format = args.output_file.lower().endswith('.json')
-    output_table( args, setToPval, setToRuntime, setToFDR, setToObs, json=json_format )
+    output_table( args, setToPval, setToRuntime, setToFDR, setToObs, json_format=json_format )
 
 if __name__ == '__main__': run( get_parser().parse_args(sys.argv[1:]) )

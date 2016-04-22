@@ -14,7 +14,6 @@ from benjamini_hochberg import benjamini_hochberg_correction
 ################################################################################
 # Permutational test
 ################################################################################
-
 # Compute the mutual exclusivity T for the given gene set
 def T(M, geneToCases):
     sampleToCount = Counter( s for g in M for s in geneToCases.get(g, []) )
@@ -48,7 +47,11 @@ def permutational_test(sets, geneToCases, num_patients, permuted_files, num_core
         map_fn = pool.map
     else:
         map_fn = map
-
+    # Filter the sets based on the observed values
+    k = len(next(iter(sets)))
+    setToObs = dict( (M, observed_values(M, num_patients, geneToCases)) for M in sets )
+    sets = set( M for M, (T, X, Z, tbl) in setToObs.iteritems() if testable_set(k, T, Z, tbl) )
+    
     # Compute the distribution of exclusivity for each pair across the permuted files
     np    = float(len(permuted_files))
     args  = [ (sets, permuted_files[i::num_cores]) for i in range(num_cores) ]
@@ -66,7 +69,7 @@ def permutational_test(sets, geneToCases, num_patients, permuted_files, num_core
             setToDist[k].extend(v)
 
     # Compute the observed values and then the P-values
-    setToObs = dict( (M, observed_values(M, num_patients, geneToCases)) for M in sets )
+    setToObs = dict( (M, setToObs[M]) for M in sets )
     setToPval = dict()
     for M, (X, T, Z, tbl) in setToObs.iteritems():
         # Compute the P-value.
@@ -118,6 +121,7 @@ def test_set_group( sets, geneToCases, num_patients, method, test, P=None, verbo
     # Construct the arguments to test each set
     setToPval, setToTime, setToObs = dict(), dict(), dict()
     num_sets = len(sets)
+    k = len(next(iter(sets)))
     for i, M in enumerate(sets):
         # Simple progress bar
         if verbose > 1:
@@ -128,7 +132,7 @@ def test_set_group( sets, geneToCases, num_patients, method, test, P=None, verbo
         X, T, Z, tbl = setToObs[M] = observed_values(sorted(M), num_patients, geneToCases )
         
         # Ignore the opposite tail, where we have more co-occurrences than exclusivity
-        if Z >= T or tbl[1] == 0 or tbl[2] == 0 or tbl[4] == 0 : continue
+        if not testable_set(k, T, Z, tbl): continue
 
         # Compute the saddlepoint approximations
         start = time()
@@ -176,3 +180,10 @@ def test_sets( sets, geneToCases, num_patients, method, test, P=None, num_cores=
     setToFDR = dict(zip(tested_sets, benjamini_hochberg_correction(pvals)))
         
     return setToPval, setToTime, setToFDR, setToObs
+
+################################################################################
+# Helpers
+################################################################################
+# Testable set
+def testable_set( k, T, Z, ktbl ):
+    return T > Z or all( tbl[2**i] > 0 for i in range(k) )

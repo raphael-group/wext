@@ -3,7 +3,6 @@ venv/
 data/
 third-party/
 output/
-experiments/
 LOGS.md
 
 # Python

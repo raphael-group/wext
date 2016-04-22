@@ -34,11 +34,11 @@ def create_tbl_header( k ):
     return '\t'.join([ bin_format.format(i) for i in range(2**k) ])
 
 # Output a run to file as a table or JSON file
-def output_table(args, setToPval, setToRuntime, setToFDR, setToObs, json=False ):
+def output_table(args, setToPval, setToRuntime, setToFDR, setToObs, json_format=False ):
     is_permutational = nameToTest[args.test] == PERMUTATIONAL
     with open(args.output_file, 'w') as OUT:
         # Tab-separated
-        if not json:
+        if not json_format:
             # Construct the rows
             rows = []
             for M, pval in setToPval.iteritems():
@@ -63,12 +63,14 @@ def output_table(args, setToPval, setToRuntime, setToFDR, setToObs, json=False )
             # Record the parameters
             params = dict(test=args.test, min_frequency=args.min_frequency,
                           mutation_file=os.path.abspath(args.mutation_file),
-                          k=args.gene_set_size, method=method)
+                          k=args.gene_set_size)
             if is_permutational:
                 params['permuted_matrix_files'] = args.permuted_matrix_files
                 params['num_permutations']      = args.num_permutations
             else:
-                params['weights_file'] = os.path.abspath(args.weight_file)
+                if nameToTest[args.test] == WEIGHTED:
+                    params['weights_file'] = os.path.abspath(args.weights_file)
+                params['method'] = args.method
 
             # Output to file
             output = dict(params=params, setToPval=convert_dict_for_json(setToPval),
