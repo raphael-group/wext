@@ -29,22 +29,22 @@ def enumeration(k):
              a += [k]
         indices.append(a)
 
-    # Identify the indices for each term of the gradient vector and the Jacobian matrix.
+    # Identify the indices for each term of the gradient vector and the Hessian matrix.
 
     gradient_indices = []
     for i in range(k+1):
         b = [j for j, a in enumerate(indices) if i in a]
         gradient_indices.append(b)
 
-    jacobian_indices = []
+    hessian_indices = []
     for i in range(k+1):
         b = []
         for j in range(k+1):
             c = [l for l, a in enumerate(indices) if i in a and j in a]
             b.append(c)
-        jacobian_indices.append(b)
+        hessian_indices.append(b)
 
-    return states, indices, gradient_indices, jacobian_indices
+    return states, indices, gradient_indices, hessian_indices
 
 def saddlepoint(observed_t, observed_y, probabilities, enumeration_k=None):
 
@@ -55,9 +55,9 @@ def saddlepoint(observed_t, observed_y, probabilities, enumeration_k=None):
     # Enumerate the states for the observed variables and identify indices for the terms.
 
     if enumeration_k:
-        states, indices, gradient_indices, jacobian_indices = enumeration_k
+        states, indices, gradient_indices, hessian_indices = enumeration_k
     else:
-        states, indices, gradient_indices, jacobian_indices = enumeration(k)
+        states, indices, gradient_indices, hessian_indices = enumeration(k)
 
     # Collect the observations and perform the continuity correction for t.
 
@@ -115,16 +115,16 @@ def saddlepoint(observed_t, observed_y, probabilities, enumeration_k=None):
         for i in range(k+1):
             c[i, :] = np.sum(terms[gradient_indices[i], :], axis=0)*b
 
-        jacobian_terms = np.zeros((k+1, k+1))
+        hessian_terms = np.zeros((k+1, k+1))
 
         for i in range(k+1):
             for j in range(i, k+1):
-                a[:] = np.sum(terms[jacobian_indices[i][j], :], axis=0)
-                jacobian_terms[i, j] = np.sum(a*b - c[i]*c[j])
+                a[:] = np.sum(terms[hessian_indices[i][j], :], axis=0)
+                hessian_terms[i, j] = np.sum(a*b - c[i]*c[j])
                 if i!=j:
-                    jacobian_terms[j, i] = jacobian_terms[i, j]
+                    hessian_terms[j, i] = hessian_terms[i, j]
 
-        return jacobian_terms
+        return hessian_terms
 
     # These are the non-joint moment and cumulant generating functions and their derivatives.
 
