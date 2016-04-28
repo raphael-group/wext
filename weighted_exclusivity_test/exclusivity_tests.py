@@ -29,7 +29,7 @@ def weighted_test(t, x, p, method=EXACT, tail=ONE_GREATER, check=True, verbose=0
     if method == EXACT:
         p_value = exact_test( t, x, p, tail, verbose )
     if method == SADDLEPOINT:
-        p_value = saddlepoint( t, x, p, tail, verbose )
+        p_value = saddlepoint( t, x, p, tail )
 
     return p_value
 
@@ -38,7 +38,7 @@ def unweighted_test(t, x, tbl, method=EXACT, tail=ONE_GREATER, verbose=0):
     N = sum(tbl)
     if method == SADDLEPOINT:
         p = [ [1./x_i] * N for x_i in x ]
-        p_value = saddlepoint( t, x, p, tail, verbose )
+        p_value = saddlepoint( t, x, p, tail )
     elif method == EXACT:
         k = len(x)
         assert( tbl and len(tbl) == 2**k )
