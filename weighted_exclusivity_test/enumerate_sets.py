@@ -185,5 +185,5 @@ def test_sets( sets, geneToCases, num_patients, method, test, P=None, num_cores=
 # Helpers
 ################################################################################
 # Testable set
-def testable_set( k, T, Z, ktbl ):
-    return T > Z or all( tbl[2**i] > 0 for i in range(k) )
+def testable_set( k, T, Z, tbl ):
+    return T > Z and all( tbl[2**i] > 0 for i in range(k) )

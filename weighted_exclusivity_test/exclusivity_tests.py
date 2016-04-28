@@ -35,6 +35,7 @@ def weighted_test(t, x, p, method=EXACT, tail=ONE_GREATER, check=True, verbose=0
 
 # Perform the unweighted test
 def unweighted_test(t, x, tbl=None, method=EXACT, tail=ONE_GREATER, verbose=0):
+    if tbl: N = sum(tbl)
     if method == SADDLEPOINT:
         p = [ [1./x_i] * N for x_i in x ]
         p_value = saddlepoint( t, x, p, tail, verbose )
@@ -45,7 +46,6 @@ def unweighted_test(t, x, tbl=None, method=EXACT, tail=ONE_GREATER, verbose=0):
             raise NotImplementedError("CoMEt is not available to compute the unweighted test exactly")
         else:
             k = len(x)
-            N = sum(tbl)
             if N >= cometMaxN:
                 raise NotImplementedError("CoMEt is only initalized to compute P-values for N < {}".format(comet.maxN))
             num_tbls, p_value = comet.exact_test( k, N, tbl, 1.1 )
