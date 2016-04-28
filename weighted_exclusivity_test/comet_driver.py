@@ -16,4 +16,3 @@ try:
 except ImportError:
     loaded    = False
     exact_test = None
-    

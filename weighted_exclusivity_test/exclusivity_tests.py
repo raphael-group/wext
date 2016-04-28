@@ -24,8 +24,8 @@ def weighted_test(t, x, p, method=EXACT, tail=ONE_GREATER, check=True, verbose=0
         # Check that the number of mutually exclusive mutations is not greater than the total number of mutations.
         assert(t<=sum(x))
 
-        p = [ list(p_g) for p_g in p ]
-        
+    p = [ list(p_g) for p_g in p ]
+
     if method == EXACT:
         p_value = exact_test( t, x, p, tail, verbose )
     if method == SADDLEPOINT:
@@ -34,7 +34,8 @@ def weighted_test(t, x, p, method=EXACT, tail=ONE_GREATER, check=True, verbose=0
     return p_value
 
 # Perform the unweighted test
-def unweighted_test(t, x, tbl=None, method=EXACT, tail=ONE_GREATER, verbose=0):
+def unweighted_test(t, x, tbl, method=EXACT, tail=ONE_GREATER, verbose=0):
+    N = sum(tbl)
     if method == SADDLEPOINT:
         p = [ [1./x_i] * N for x_i in x ]
         p_value = saddlepoint( t, x, p, tail, verbose )
@@ -44,8 +45,6 @@ def unweighted_test(t, x, tbl=None, method=EXACT, tail=ONE_GREATER, verbose=0):
         if not comet.loaded:
             raise NotImplementedError("CoMEt is not available to compute the unweighted test exactly")
         else:
-            k = len(x)
-            N = sum(tbl)
             if N >= cometMaxN:
                 raise NotImplementedError("CoMEt is only initalized to compute P-values for N < {}".format(comet.maxN))
             num_tbls, p_value = comet.exact_test( k, N, tbl, 1.1 )

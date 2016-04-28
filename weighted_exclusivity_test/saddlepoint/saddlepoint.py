@@ -68,8 +68,8 @@ def saddlepoint(observed_t, observed_y, probabilities, enumeration_k=None):
     # Precompute the products of the success and failure probabilities.
 
     p = np.zeros((2, k, n))
-    p[0] = 1.0-probabilities
-    p[1] = probabilities
+    p[0] = 1.0-np.array(probabilities)
+    p[1] = np.array(probabilities)
 
     w = np.zeros((2**k, n))
     for i, state in enumerate(states):
