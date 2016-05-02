@@ -6,7 +6,7 @@ from constants import *
 from exact import exact_test, py_exact_test
 import cpoibin
 from saddlepoint import saddlepoint
-import comet_driver as comet
+from comet_exact_test import comet_exact_test
 
 # Perform the weighted exclusivity test using the given method.
 def weighted_test(t, x, p, method=EXACT, tail=ONE_GREATER, check=True, verbose=0):
@@ -34,7 +34,6 @@ def weighted_test(t, x, p, method=EXACT, tail=ONE_GREATER, check=True, verbose=0
     return p_value
 
 # Perform the unweighted test
-
 def unweighted_test(t, x, tbl, method=EXACT, tail=ONE_GREATER, verbose=0):
     N = sum(tbl)
     if method == SADDLEPOINT:
@@ -43,11 +42,6 @@ def unweighted_test(t, x, tbl, method=EXACT, tail=ONE_GREATER, verbose=0):
     elif method == EXACT:
         k = len(x)
         assert( tbl and len(tbl) == 2**k )
-        if not comet.loaded:
-            raise NotImplementedError("CoMEt is not available to compute the unweighted test exactly")
-        else:
-            if N >= cometMaxN:
-                raise NotImplementedError("CoMEt is only initalized to compute P-values for N < {}".format(comet.maxN))
-            num_tbls, p_value = comet.exact_test( k, N, tbl, 1.1 )
+        num_tbls, p_value = comet_exact_test( k, N, tbl, 1.1 )
 
     return p_value

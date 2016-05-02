@@ -27,5 +27,3 @@ nameToTest    = dict(Unweighted=UNWEIGHTED, Weighted=WEIGHTED, Permutational=PER
 TESTS         = set(testToName.keys())
 TEST_NAMES    = set(testToName.values())
 
-# CoMEt
-cometMaxN = 10000 # used for precompute factorials
