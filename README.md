@@ -12,14 +12,6 @@ Latest tested version in parentheses.
 
     b. SciPy (0.17.0)
 
-    c. Matplotlib (1.5.1)
-
-    d. Seaborn (0.7.0)
-
-    e. Pandas (0.18.0)
-
-    f. NetworkX (1.11) -- optional as it is required for CoMEt, see below
-
 2. R (3.1.1)
 
     a. BiReWire (1.8.0)
@@ -34,16 +26,6 @@ We recommend using [`virtualenv`](https://virtualenv.pypa.io/en/latest/) to inst
 You can install the BiRewire R module following the instructions on [their website](https://www.bioconductor.org/packages/release/bioc/html/BiRewire.html).
 
 [Point to Wiki for additional information]
-
-#### Optional ####
-
-The [CoMEt Python module](https://github.com/raphael-group/comet) is required to compute the exact version of the unweighted test. By default, the weighted exclusivity test expects CoMEt to be install in `third-party/comet`. You can install and setup the latest version of CoMEt using the following commands:
-
-    mkdir third-party
-    cd third-party
-    git clone https://github.com/raphael-group/comet.git
-    cd comet
-    python setup.py build
 
 ### Setup ###
 
