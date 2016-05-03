@@ -23,3 +23,11 @@ module = Extension('cexact_test', include_dirs=[numpy.get_include()],
     extra_compile_args = ['-g', '-O0'])
 setup(name='cexact_test', version='0.0.1',  ext_modules=[module],
       description='Exact test implementation of Weighted enrichment test.')
+
+# Compile the CoMEt exact test module
+srcs = ['/src/c/comet_exact_test.c']
+module = Extension('comet_exact_test', include_dirs=[numpy.get_include()],
+    sources = [ thisDir + s for s in srcs ],
+    extra_compile_args = ['-g', '-O0'])
+setup(name='comet_exact_test', version='0.0.1',  ext_modules=[module],
+      description='CoMEt exact test implementation.')
