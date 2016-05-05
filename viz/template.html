@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<head>
+<title>Weighted Exact Test for Mutually Exclusive Mutations</title>
+<meta charset="utf-8">
+<link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="bower_components/fontawesome/css/font-awesome.min.css">
+<link rel="stylesheet" href="bower_components/DataTables/media/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="bower_components/DataTables/media/css/dataTables.bootstrap.min.css">
+<style>
+</style>
+<script src="bower_components/d3/d3.min.js"></script>
+<script src="bower_components/jquery/dist/jquery.min.js"></script>
+<script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+<script src="bower_components/DataTables/media/js/jquery.dataTables.min.js"></script>
+<script src="bower_components/DataTables/media/js/dataTables.bootstrap.min.js"></script>
+<script src="bower_components/gd3/gd3.js"></script>
+</head>
+<body>
+<div class="container">
+	<div class="row">
+		<div class="col-lg-12">
+			<h2>Weighted exclusivity test results</h2>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-lg-12">
+			<select class="form-control" id="dataset-select">
+				{% for run_name in run_names %}
+					<option value="{{ run_name }}">{{ run_name }}</option>
+				{% end %}
+			</select>
+			<h5>
+				Tested
+				<span id="num-genes"></span> genes mutated in &ge;
+				<span id="min-freq"></span> of the
+				<span id="num-samples"></span> samples
+			</h5>
+		</div>
+	</div>
+  <div class="col-lg-12">
+	<div class="row">
+		<div class="panel panel-default">
+			<!-- Default panel contents -->
+			<div class="panel-heading"><h4>Results table</h4></div>
+			<div class="panel-body" id="results-table">
+				<ul class="nav nav-tabs">
+				  <li role="presentation" class="active" data-result='pval'><a href="#">P-value</a></li>
+				  <li role="presentation" data-result='fdr'><a href="#">FDR</a></li>
+				  <li role="presentation" data-result='runtime'><a href="#">Runtime</a></li>
+				</ul>
+				<br/>
+			</div>
+		</div>
+	</div>
+	<div class="row">
+		<div class="panel panel-default">
+			<!-- Default panel contents -->
+			<div class="panel-heading"><h4>
+				<small class="pull-right">Click a row above to view a gene pair in detail.</small>
+				Gene pair visualization
+			</h4></div>
+			<div class="panel-body" id="gene-set">
+				<h5>Mutation matrix <i>A</i></h5>
+				<div id="mutmtx"></div>
+				<hr/>
+				<h5>Mutation probabilities <i>P</i></h5>
+				<div id="heatmap"></div>
+			</div>
+		</div>
+	</div>
+	</div>
+	<br/><br/>
+	<hr class="clearfix" />
+	<div class="row">
+		<div class="col-lg-4">
+			Built with Bootstrap, D3, GD3, jQuery, and DataTables.
+		</div>
+	</div>
+</div>
+<script>
+$(document).ready(function(){
+	// Globals and constants
+	var resultsTableContainer = d3.select('div#results-table'),
+		resultsTabs = d3.selectAll('div#results-table ul li'),
+		vizContainer = $('div#gene-set'),
+		mutMtxContainer = d3.select("div#gene-set div#mutmtx"),
+		heatmapContainer = d3.select("div#gene-set div#heatmap");
+
+	// Initialize the select
+	d3.select('select#dataset-select')
+		.on('change', show_dataset);
+
+	// Initialize with the first dataset
+	show_dataset();
+
+	function show_dataset(){
+		// Hide any existing visualizations
+		vizContainer.hide();
+
+		// Select the current dataset and load the data
+		var dataset = $('select#dataset-select').val();
+		d3.json('data/' + dataset + '.json', function(err, data){
+			// Extract the data into shorter variable handles
+			var sets = data.sets,
+				k = data.sets[0].split('\t').length,
+				setToPval = data.setToPval,
+				setToFDR = data.setToFDR,
+				setToRuntime = data.setToRuntime,
+				setToObs = data.setToObs,
+				setToResult = { pval: setToPval, fdr: setToFDR, runtime: setToRuntime },
+				P = data.P,
+				geneToCases = data.geneToCases,
+				params = data.params,
+				genes = data.genes,
+				methods = data.methods,
+				patientNames = data.patients,
+				patients = data.patients.map(function(d){ return {_id: d, name: d}; }),
+				patientToType = data.patientToType;
+
+			// Set the title based on the parameters
+			d3.select('h3#dataset').text(dataset)
+			d3.select('span#num-genes').text(genes.length);
+			d3.select('span#num-samples').text(patients.length);
+			d3.select('span#min-freq').text(params.min_freq);
+
+			// Reset the results table
+			var binary_format = d3.format("0>" + k + "b");
+			d3.select('div#results-table').selectAll('div').remove();
+			var resultsTable = resultsTableContainer.append('table');
+			var resultsTableHeader = resultsTable.append('thead').append('tr');
+			resultsTableHeader.selectAll('.th-gene')
+				.data(d3.range(k)).enter()
+				.append('th')
+				.text(function(d){ return 'Gene ' + (d+1); });
+			resultsTableHeader.selectAll('.th-method')
+				.data(methods).enter()
+				.append('th')
+				.text(function(d){ return d; });
+			resultsTableHeader.selectAll('.th-gene')
+				.data(d3.range(k)).enter()
+				.append('th')
+				.text(function(d){ return 'Y_ ' + (d+1); });
+			resultsTableHeader.append('th').text('T');
+			resultsTableHeader.append('th').text('Z');
+			resultsTableHeader.selectAll('.th-obs')
+				.data(d3.range(Math.pow(2, k))).enter()
+				.append('th')
+				.text(function(d){ return 't' + binary_format(d) });
+
+			// Create the results table
+			var format = d3.format('.5e');
+			var resultsTableBody = resultsTable.append('tbody');
+			var resultsRows = resultsTableBody.selectAll('.row')
+				.data(sets).enter()
+				.append('tr')
+				.style('cursor', 'pointer')
+				.on('click', drawGeneSet);
+
+			resultsRows.selectAll('.gene')
+				.data(function(d){ return d.split('\t'); }).enter()
+				.append('td')
+				.text(function(d){ return d; });
+			methods.forEach(function(method){
+				var td = resultsRows.append('td');
+				td.selectAll('.result')
+					.data(function(M){
+						return ['pval', 'fdr', 'runtime'].map(function(d){ return {M: M, result: d}; })
+					}).enter()
+					.append('span')
+					.attr('class', function(d){ return 'result ' + d.result; })
+					.style('display', function(d, i){ return i == 0 ? '' : 'none'; })
+					.text(function(d){ return format(setToResult[d.result][method][d.M]); });
+			});
+			resultsRows.selectAll('.cont-tbl')
+				.data(function(M){
+					var tuple = setToObs[methods[0]][M], // obs should be the same for each method
+						Y = tuple[0],
+						T = tuple[1],
+						Z = tuple[2],
+						tbl = tuple[3];
+					return Y.concat([T, Z].concat(tbl));
+				}).enter()
+				.append('td')
+				.text(function(d){ return d; });
+
+			var dataTbl = $('div#results-table table');
+			dataTbl.dataTable({
+				scrollX:        true,
+				scrollY:		200,
+				scrollCollapse: true,
+				paging:		    true,
+				pageLength:     100,
+				searching:	    true,
+				order:          [[k, 'asc']]
+			});
+
+			// Set up the tab system
+			resultsTabs.on('click', function(){
+				// Toggle so the current tab is active (highlighted)
+				resultsTabs.attr('class', '');
+				d3.select(this).attr('class', 'active');
+				var attr = $(this).data('result');
+
+				// Only show the results for that tab
+				$('div#results-table table span.result').hide();
+				$('div#results-table table span.result.' + attr).show();
+			});
+
+			// Function for drawing the mutaiton matrix for a pair of genes
+			function drawGeneSet(M){
+				// Show the visualizations
+				vizContainer.show();
+
+				// Highlight the current row
+				if ( $(this).hasClass('selected') ) {
+					$(this).removeClass('selected');
+				}
+				else {
+					dataTbl.$('tr.selected').removeClass('selected');
+					$(this).addClass('selected');
+				}
+
+				// Extract the current genes and associated data
+				var gene_set = M.split('\t').sort(function(a, b){ return d3.descending(geneToCases[a].length, geneToCases[b].length )}),
+					p_is	 = gene_set.map(function(g){ return P[g]; });
+
+				// Construct the heatmap data
+				var heatmapData = {xs: patientNames, ys: gene_set, cells: []};
+				gene_set.forEach(function(gene){
+					patientNames.forEach(function(patient){
+						heatmapData.cells.push({
+							x: patient,
+							y: gene,
+							value: P[gene][patient]
+						});
+					});
+				});
+
+				// Set up the GD3 color palette
+				var scale = d3.scale.category20();
+				var datasets = ["Non-hypermutator", "Hypermutator"]
+				var colors = ["#1f78b4", "#b2df8a"];
+				gd3.color.categories(datasets, colors);
+				gd3.color.annotations('Patient type', datasets, 'discrete', colors);
+				gd3.color.annotations('Cancer type', datasets, 'discrete', colors);
+
+				// Create heatmap annotation data
+				var heatmapAnnotations = {categories: ["Patient type"], sampleToAnnotations: {}};
+		        patientNames.forEach(function(patient){
+		          heatmapAnnotations.sampleToAnnotations[patient] = [patientToType[patient]];
+		        });
+ 		        heatmapData.annotations = heatmapAnnotations;
+
+				// Add the heatmap
+				heatmapContainer.selectAll('*').remove();
+				heatmapContainer.datum(heatmapData)
+					.call(gd3.heatmap({style: {width: vizContainer.width() -20}}));
+
+				// Construct the mutation matrix
+				var M = {};
+				gene_set.forEach(function(gene){
+					M[gene] = {};
+					geneToCases[gene].forEach(function(patient){
+						M[gene][patient] = ['snv'];
+					});
+				});
+				var aberrationsData = { M: M, sampleToTypes: patientToType, samples: patients };
+
+				// Empty out the current drawing and add the new mutation matrix
+
+				mutMtxContainer.selectAll('*').remove();
+				mutMtxContainer.datum(aberrationsData).call(
+					gd3.mutationMatrix({style: {width: vizContainer.width() - 20}})
+					   .showColumnLabels(false)
+				);
+
+				// Construct and apply the tooltips
+				var cells = mutMtxContainer.selectAll('.mutmtx-sampleMutationCells g');
+				cells.classed('gd3-tipobj', true);
+				var mutMtxTooltips = [];
+				cells.each(function(d) {
+					var mutationType = mutationToName(d.cell.type),
+						mutationClass = mutationToClass(d.cell.type),
+						tooltipData  = [
+							{ type: 'text', text: 'Sample: ' + d.colLabel },
+							{ type: 'text', text: 'Type: ' + d.cell.dataset},
+							{ type: 'text', text: 'Mutation: ' + mutationType },
+							{ type: 'text', text: 'P_[ij] = ' + format(P[d.rowLabel][d.colLabel]) }
+						];
+					mutMtxTooltips.push(tooltipData.map(gd3.tooltip.datum));
+				});
+				mutMtxContainer.select('svg').call(gd3.tooltip.make().useData(mutMtxTooltips));
+
+			}
+		});
+	}
+
+	// Helper functions
+	function mutationToName(m){
+		m = m.toLowerCase();
+		if (m == "snv") return "SNV";
+		else if (m == "inactive_snv") return "Inactivating SNV";
+		else if (m == "amp") return "Amplification";
+		else if (m == "del") return "Deletion";
+		else return m;
+	}
+
+	function mutationToClass(m){
+		m = m.toLowerCase();
+		if (m == "snv" || m == "inactive_snv") return "SNV";
+		else if (m == "amp") return "Amplification";
+		else if (m == "del") return "Deletion";
+		else if (m == "expression") return "Expression";
+		else if (m == "methylation") return "Methylation";
+		else return "Other";
+	}
+});
+</script>

@@ -37,6 +37,10 @@ The C extensions must be compiled before running the weighted exclusivity test:
 ### Usage ###
 [Add usage here. Point to Wiki.]
 
+### Visualization ###
+
+We provide scripts to run an interactive web application to view the output of `compute_exclusivity.py`, including both the mutations and mutation probabilities for each set. See `viz/README.md` for additional instructions and details.
+
 ### Testing ###
 [Add testing instructions here.]
 
@@ -47,4 +51,3 @@ Please visit the [Dendrix Google Group](https://groups.google.com/forum/#!forum/
 ### Reference ###
 
 Mark D.M. Leiserson, Matthew A. Reyna, and Benjamin J. Raphael. (2016) A Weighted Exact Test for Mutually Exclusive Mutations in Cancer. *In submission*.
-

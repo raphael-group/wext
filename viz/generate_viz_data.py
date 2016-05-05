@@ -3,8 +3,13 @@
 # Load required modules
 import sys, os, argparse, json
 from collections import defaultdict
+
+# Load the weighted exclusivity test code
+current_dir = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(os.path.normpath(current_dir + '/../'))
 from weighted_exclusivity_test import *
 
+# Argument parser
 def get_parser():
     # Parse arguments
     parser = argparse.ArgumentParser()
@@ -15,6 +20,7 @@ def get_parser():
     parser.add_argument('-o', '--output_file', type=str, required=True)
     return parser
 
+# Main
 def run( args ):
     # Load the input files
     setToFDR, setToPval    = defaultdict(dict), defaultdict(dict)
@@ -42,11 +48,11 @@ def run( args ):
     geneToIndex = dict(zip(genes, range(num_genes)))
     patientToType = dict( (p, "Hypermutator" if p in hypermutators else "Non-hypermutator")
                           for p in patients )
-    
+
     # Load the weights
     P = np.load(args.weights_file)
     P = dict( (g, dict(zip(patients, P[geneToIndex[g]]))) for g in genes )
-                        
+
     # Restrict the sets (if necessary)
     if args.num_sets:
         new_sets = set()
@@ -65,7 +71,7 @@ def run( args ):
     geneToCases = dict( (g, cases) for g, cases in geneToCases.iteritems() if g in genes_in_sets )
 
     print '* Considering {} sets...'.format(len(new_sets))
-                    
+
     # Output the JSON file
     with open(args.output_file, 'w') as OUT:
         # Params
@@ -73,7 +79,7 @@ def run( args ):
         params['results_files'] = [ os.path.abspath(f) for f in args.results_files ]
         params['mutation_file'] = os.path.abspath(args.mutation_file)
         params['weights_file'] = os.path.abspath(args.weights_file)
-        
+
         # Output
         output = dict(params=params, geneToCases=dict( (g, list(cases)) for g, cases in geneToCases.iteritems() ),
                       setToPval=setToPval, methods=sorted(methods),
