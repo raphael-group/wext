@@ -6,6 +6,7 @@
     "d3": "latest",
     "bootstrap": "3.x",
     "DataTables": "latest",
-    "fontawesome": "latest"
+    "fontawesome": "latest",
+    "gd3": "git@github.com:raphael-group/gd3.git#master"
   }
 }

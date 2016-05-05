@@ -44,9 +44,9 @@
 			<div class="panel-heading"><h4>Results table</h4></div>
 			<div class="panel-body" id="results-table">
 				<ul class="nav nav-tabs">
-				  <li role="presentation" class="active" data-result='pval'><a href="#">P-value</a></li>
-				  <li role="presentation" data-result='fdr'><a href="#">FDR</a></li>
-				  <li role="presentation" data-result='runtime'><a href="#">Runtime</a></li>
+				  <li role="presentation" class="active" data-measure='pval'><a href="#">P-value</a></li>
+				  <li role="presentation" data-measure='fdr'><a href="#">FDR</a></li>
+				  <li role="presentation" data-measure='runtime'><a href="#">Runtime</a></li>
 				</ul>
 				<br/>
 			</div>
@@ -93,6 +93,21 @@ $(document).ready(function(){
 	// Initialize with the first dataset
 	show_dataset();
 
+	// Set up data tables to sort scentific format numerically
+	jQuery.extend( jQuery.fn.dataTableExt.oSort, {
+	    "scientific-pre": function ( a ) {
+	        return parseFloat(a);
+	    },
+
+	    "scientific-asc": function ( a, b ) {
+	        return ((a < b) ? -1 : ((a > b) ? 1 : 0));
+	    },
+
+	    "scientific-desc": function ( a, b ) {
+	        return ((a < b) ? 1 : ((a > b) ? -1 : 0));
+	    }
+	} );
+
 	function show_dataset(){
 		// Hide any existing visualizations
 		vizContainer.hide();
@@ -117,7 +132,7 @@ $(document).ready(function(){
 				patients = data.patients.map(function(d){ return {_id: d, name: d}; }),
 				patientToType = data.patientToType;
 
-			// Set the title based on the parameters
+			// Update the parameters
 			d3.select('h3#dataset').text(dataset)
 			d3.select('span#num-genes').text(genes.length);
 			d3.select('span#num-samples').text(patients.length);
@@ -128,27 +143,56 @@ $(document).ready(function(){
 			d3.select('div#results-table').selectAll('div').remove();
 			var resultsTable = resultsTableContainer.append('table');
 			var resultsTableHeader = resultsTable.append('thead').append('tr');
-			resultsTableHeader.selectAll('.th-gene')
-				.data(d3.range(k)).enter()
-				.append('th')
-				.text(function(d){ return 'Gene ' + (d+1); });
-			resultsTableHeader.selectAll('.th-method')
-				.data(methods).enter()
+
+			// Add a header
+			var measures = ['pval', 'fdr', 'runtime'],
+					colNames = [],
+					measureToCols = { pval: [], fdr: [], runtime: []};
+
+			d3.range(k).forEach(function(i){ colNames.push('Gene ' + (i+1)); });
+			methods.forEach(function(method){
+				measures.forEach(function(measure){
+					colNames.push(method);
+					measureToCols[measure].push(colNames.length-1);
+				});
+			});
+			d3.range(k).forEach(function(i){ colNames.push('Y_' + (i+1)); });
+			colNames = colNames.concat(['T', 'Z']);
+			d3.range(Math.pow(2, k)).forEach(function(i){ colNames.push('t' + binary_format(i)); });
+
+			var numColumns = colNames.length;
+			resultsTableHeader.selectAll('.th')
+				.data(colNames).enter()
 				.append('th')
 				.text(function(d){ return d; });
-			resultsTableHeader.selectAll('.th-gene')
-				.data(d3.range(k)).enter()
-				.append('th')
-				.text(function(d){ return 'Y_ ' + (d+1); });
-			resultsTableHeader.append('th').text('T');
-			resultsTableHeader.append('th').text('Z');
-			resultsTableHeader.selectAll('.th-obs')
-				.data(d3.range(Math.pow(2, k))).enter()
-				.append('th')
-				.text(function(d){ return 't' + binary_format(d) });
 
 			// Create the results table
-			var format = d3.format('.5e');
+			var format = d3.format('.3e');
+			function rowData(M){
+				// Start with the names of each gene
+				var row = M.split('\t').map(function(g){ return {val: g, className: 'gene' }});
+
+				// Add the measurements (P-value, FDR, runtime)
+				methods.forEach(function(method){
+					measures.forEach(function(measure){
+						row.push({val: format(setToResult[measure][method][M]), className: measure });
+					});
+				});
+
+				// Add the observed values
+				var tuple = setToObs[methods[0]][M], // obs should be the same for each method
+					Y = tuple[0],
+					T = tuple[1],
+					Z = tuple[2],
+					tbl = tuple[3];
+
+				Y.concat([T, Z].concat(tbl)).forEach(function(d){
+					row.push({val: d, className: "obs"});
+				});
+
+				return row;
+			}
+
 			var resultsTableBody = resultsTable.append('tbody');
 			var resultsRows = resultsTableBody.selectAll('.row')
 				.data(sets).enter()
@@ -156,56 +200,49 @@ $(document).ready(function(){
 				.style('cursor', 'pointer')
 				.on('click', drawGeneSet);
 
-			resultsRows.selectAll('.gene')
-				.data(function(d){ return d.split('\t'); }).enter()
+			resultsRows.selectAll('.cell')
+				.data(rowData).enter()
 				.append('td')
-				.text(function(d){ return d; });
-			methods.forEach(function(method){
-				var td = resultsRows.append('td');
-				td.selectAll('.result')
-					.data(function(M){
-						return ['pval', 'fdr', 'runtime'].map(function(d){ return {M: M, result: d}; })
-					}).enter()
-					.append('span')
-					.attr('class', function(d){ return 'result ' + d.result; })
-					.style('display', function(d, i){ return i == 0 ? '' : 'none'; })
-					.text(function(d){ return format(setToResult[d.result][method][d.M]); });
-			});
-			resultsRows.selectAll('.cont-tbl')
-				.data(function(M){
-					var tuple = setToObs[methods[0]][M], // obs should be the same for each method
-						Y = tuple[0],
-						T = tuple[1],
-						Z = tuple[2],
-						tbl = tuple[3];
-					return Y.concat([T, Z].concat(tbl));
-				}).enter()
-				.append('td')
-				.text(function(d){ return d; });
+				.attr('class', function(d){ return d.className; })
+				.text(function(d){ return d.val; });
 
-			var dataTbl = $('div#results-table table');
-			dataTbl.dataTable({
+			// Initialize the data table
+			var columnTypes = [];
+			d3.range(numColumns).forEach(function(i){
+					if (i < k) columnTypes.push({type: "string"});
+					else columnTypes.push({type: "num"});
+			});
+
+			var dataTbl = $('div#results-table table').DataTable({
+				columns:        columnTypes,
 				scrollX:        true,
-				scrollY:		200,
+				scrollY:		    200,
 				scrollCollapse: true,
-				paging:		    true,
+				paging:		      true,
 				pageLength:     100,
 				searching:	    true,
 				order:          [[k, 'asc']]
 			});
 
 			// Set up the tab system
+			function toggleTabs(active_measure){
+				// Only show the results for that tab
+				measures.forEach(function(measure){
+					measureToCols[measure].forEach(function(colID){
+						var column = dataTbl.column( colID );
+						if (measure == active_measure) column.visible( true );
+						else column.visible( false );
+					});
+				});
+			}
 			resultsTabs.on('click', function(){
 				// Toggle so the current tab is active (highlighted)
 				resultsTabs.attr('class', '');
 				d3.select(this).attr('class', 'active');
-				var attr = $(this).data('result');
-
-				// Only show the results for that tab
-				$('div#results-table table span.result').hide();
-				$('div#results-table table span.result.' + attr).show();
+				toggleTabs($(this).data('measure'));
 			});
-
+			toggleTabs('pval');
+			
 			// Function for drawing the mutaiton matrix for a pair of genes
 			function drawGeneSet(M){
 				// Show the visualizations
