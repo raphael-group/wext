@@ -35,7 +35,17 @@ The C extensions must be compiled before running the weighted exclusivity test:
     python setup.py build
 
 ### Usage ###
-[Add usage here. Point to Wiki.]
+
+#### Data preprocessing ####
+Before computing the weighted test, you need to process the input mutation data and generated permuted matrices.
+
+1. Process mutation data in MAF format with `process_mutations.py`. See [Process mutations](https://github.com/raphael-group/weighted-exclusivity-test/wiki/Process-mutations) on the wiki for details on usage and input.
+2. Generate permuted versions of the mutation data with `permute_matrix.py`. See [Permute mutation data](https://github.com/raphael-group/weighted-exclusivity-test/wiki/Permute-mutation-data) on the wiki for details on usage and input.
+3. Compute mutation probabilities using the permuted mutation data with `compute_mutation_probabilities.py`. See [Compute mutation probabilities](https://github.com/raphael-group/weighted-exclusivity-test/wiki/Compute-mutation-probabilities) on the wiki for details on usage and input.
+
+#### Computing the weighted test ####
+
+Given the mutation data, we compute the exclusivity of sets _M_ of genes with `compute_exclusivity.py`. Users can choose which test (unweighted, weighted, or permutational) and, for the unweighted and weighted tests, which method (exact or saddlepoint) is used to compute the _p_-values. See [Compute exclusivity](https://github.com/raphael-group/weighted-exclusivity-test/wiki/Compute-exclusivity) on the wiki for details on usage and input.
 
 ### Visualization ###
 
