@@ -7,6 +7,9 @@
     "bootstrap": "3.x",
     "DataTables": "latest",
     "fontawesome": "latest",
-    "gd3": "git@github.com:raphael-group/gd3.git#master"
+    "gd3": "https://github.com/raphael-group/gd3.git#master"
+  },
+  "resolutions": {
+    "d3": "3.5.17"
   }
 }
