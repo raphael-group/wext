@@ -47,10 +47,11 @@ def permutational_test(sets, geneToCases, num_patients, permuted_files, num_core
         map_fn = pool.map
     else:
         map_fn = map
+        
     # Filter the sets based on the observed values
     k = len(next(iter(sets)))
     setToObs = dict( (M, observed_values(M, num_patients, geneToCases)) for M in sets )
-    sets = set( M for M, (T, X, Z, tbl) in setToObs.iteritems() if testable_set(k, T, Z, tbl) )
+    sets = set( M for M, (X, T, Z, tbl) in setToObs.iteritems() if testable_set(k, T, Z, tbl) )
     
     # Compute the distribution of exclusivity for each pair across the permuted files
     np    = float(len(permuted_files))
