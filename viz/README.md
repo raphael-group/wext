@@ -22,3 +22,6 @@ The visualization scripts have additional dependencies that must be installed.
 First, use `generate_viz_data.py` to generate a JSON file(s) which will serve as the input for the web server.
 
 Then, run `server.py` to start the web server. By default, it will serve the web application port 8000, which you can view by pointing your browser to `http://localhost:8000`.
+
+
+For additional details on usage and the arguments to the two scripts, please see [the wiki](https://github.com/raphael-group/weighted-exclusivity-test/wiki/VIsualization).
