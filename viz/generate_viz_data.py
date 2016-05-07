@@ -15,8 +15,8 @@ def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('-rf', '--results_files', type=str, required=True, nargs='*')
     parser.add_argument('-mf', '--mutation_file', type=str, required=True)
-    parser.add_argument('-wf', '--weights_file', type=str, required=False, default=None)
-    parser.add_argument('-N', '--num_sets', type=int, required=False, default=None)
+    parser.add_argument('-wf', '--weights_file', type=str, required=True, default=None)
+    parser.add_argument('-N', '--num_sets', type=int, required=False, default=1000)
     parser.add_argument('-o', '--output_file', type=str, required=True)
     return parser
 
