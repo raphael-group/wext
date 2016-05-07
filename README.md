@@ -25,7 +25,7 @@ We recommend using [`virtualenv`](https://virtualenv.pypa.io/en/latest/) to inst
 
 You can install the BiRewire R module following the instructions on [their website](https://www.bioconductor.org/packages/release/bioc/html/BiRewire.html).
 
-[Point to Wiki for additional information]
+See the wiki for additional instructions on [Setup and installation](https://github.com/raphael-group/weighted-exclusivity-test/wiki/Setup-and-installation).
 
 ### Setup ###
 
@@ -49,7 +49,7 @@ Given the mutation data, we compute the exclusivity of sets _M_ of genes with `c
 
 ### Visualization ###
 
-We provide scripts to run an interactive web application to view the output of `compute_exclusivity.py`, including both the mutations and mutation probabilities for each set. See `viz/README.md` for additional instructions and details.
+We provide scripts to run an interactive web application to view the output of `compute_exclusivity.py`, including both the mutations and mutation probabilities for each set. See [`viz/README.md`](https://github.com/raphael-group/weighted-exclusivity-test/blob/master/viz/README.md) and [the wiki](https://github.com/raphael-group/weighted-exclusivity-test/wiki/VIsualization) for additional instructions and details.
 
 ### Testing ###
 [Add testing instructions here.]
