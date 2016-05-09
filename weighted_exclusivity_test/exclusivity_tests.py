@@ -42,6 +42,6 @@ def unweighted_test(t, x, tbl, method=EXACT, tail=ONE_GREATER, verbose=0):
     elif method == EXACT:
         k = len(x)
         assert( tbl and len(tbl) == 2**k )
-        num_tbls, p_value = comet_exact_test( k, N, tbl, 1.1 )
+        p_value, mid_p_value = comet_exact_test( k, N, tbl, 1.1 )
 
     return p_value
