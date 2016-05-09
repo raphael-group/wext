@@ -1,10 +1,9 @@
-#!/usr/bin/env python
-
 import numpy as np
 from numpy.linalg import det
 from scipy.optimize import fsolve
 from scipy.stats import norm
 import itertools
+from constants import *
 
 def condition(state):
 
@@ -46,7 +45,7 @@ def enumeration(k):
 
     return states, indices, gradient_indices, hessian_indices
 
-def saddlepoint(observed_t, observed_y, probabilities, enumeration_k=None):
+def saddlepoint(observed_t, observed_y, probabilities, verbose=False, enumeration_k=None):
 
     # Find the dimensions of the observations.
 
