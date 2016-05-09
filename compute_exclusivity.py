@@ -77,17 +77,6 @@ def run( args ):
         method = nameToMethod[args.method]
         setToPval, setToRuntime, setToFDR, setToObs = test_sets(sets, geneToCases, num_patients, method, test, geneToP, args.num_cores, args.verbose)
 
-    # Make sure all P-values are numbers
-    invalid_sets = set( M for M, pval in setToPval.iteritems() if np.isnan(pval) )
-    for M in invalid_sets:
-        del setToPval[M]
-        del setToFDR[M]
-        del setToRuntime[M]
-        del setToObs[M]
-        
-    if args.verbose > 0:
-        print '* Removed {} sets with NaN P-values'.format(len(invalid_sets))
-        
     # Output to file
     json_format = args.output_file.lower().endswith('.json')
     output_table( args, setToPval, setToRuntime, setToFDR, setToObs, json_format=json_format )

@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+# P-values are called invalid if P > 1+PTOL or P < -PTOL
+PTOL = 10**-3
+
 # Set sizes implemented
 SET_SIZES_IMPLEMENTED = set([2, 3])
 

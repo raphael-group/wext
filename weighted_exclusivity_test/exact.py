@@ -2,7 +2,6 @@
 
 import numpy as np
 import wext_exact_test
-import cpoibin
 from constants import *
 
 def exact_test( t, x, p, verbose=False ):
@@ -14,13 +13,12 @@ def exact_test( t, x, p, verbose=False ):
     else:
         raise NotImplementedError("Exact test: only k=2,3 implemented.")
 
-# Exact test k=3 just calls C directly, but only has the ONE_GREATER tail
-# implemented
+# Wrapper for k=3 exact test C function
 def exact_test_k3(t, x, p, verbose):
     N = len(p[0])
     return wext_exact_test.triple_exact_test( N, t, x[0], x[1], x[2], p )
 
-# Compute the exact test, reporting the given tail
+# Wrapper for k=2 exact test C function
 def exact_test_k2(t, (x, y), (p_x, p_y), verbose):
 	# Two-sided test
     N = len(p_x)
