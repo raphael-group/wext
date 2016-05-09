@@ -259,7 +259,7 @@ struct Pvalues comet_exact_test(int k, int N, int *ctbl, double pvalthresh){
                            margins, ex_cells, co_cells, num_co_cells, blank_tbl,
                            mar_stack, 0, T, Tobs);
 
-  p_value     = pval[1];
+  p_value     = pval[0];
   mid_p_value = (pval[0]+pval[1])/2;
   
   // Free memory
