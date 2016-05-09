@@ -190,7 +190,6 @@ def test_sets( sets, geneToCases, num_patients, method, test, P=None, num_cores=
     # Compute the FDRs
     tested_sets = setToPval.keys()
     pvals = [ setToPval[M] for M in tested_sets ]
-    print min(pvals), max(pvals)
     setToFDR = dict(zip(tested_sets, benjamini_hochberg_correction(pvals, independent=False)))
         
     return setToPval, setToTime, setToFDR, setToObs
