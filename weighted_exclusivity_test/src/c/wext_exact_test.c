@@ -211,8 +211,8 @@ PyMethodDef weightedEnrichmentMethods[] = {
 
 // Note that the suffix of init has to match the name of the module,
 // both here and in the setup.py file
-PyMODINIT_FUNC initcexact_test(void) {
-    PyObject *m = Py_InitModule("cexact_test", weightedEnrichmentMethods);
+PyMODINIT_FUNC initwext_exact_test(void) {
+    PyObject *m = Py_InitModule("wext_exact_test", weightedEnrichmentMethods);
     if (m == NULL) {
         return;
     }

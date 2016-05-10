@@ -4,7 +4,7 @@
 import multiprocessing as mp, json
 from time import time
 from collections import defaultdict, Counter
-from math import ceil
+from math import ceil, isnan
 
 # Load local modules
 from exclusivity_tests import weighted_test, unweighted_test
@@ -80,7 +80,7 @@ def permutational_test(sets, geneToCases, num_patients, permuted_files, num_core
     # Compute FDRs
     tested_sets = setToPval.keys()
     pvals = [ setToPval[M] for M in tested_sets ]
-    setToFDR = dict(zip(tested_sets, benjamini_hochberg_correction(pvals)))
+    setToFDR = dict(zip(tested_sets, benjamini_hochberg_correction(pvals, independent=False)))
         
     return setToPval, setToTime, setToFDR, setToObs
 
@@ -175,10 +175,22 @@ def test_sets( sets, geneToCases, num_patients, method, test, P=None, num_cores=
         setToTime.update(time.items())
         setToObs.update(obs.items())
 
+    # Make sure all P-values are numbers
+    tested_sets = len(setToPval)
+    invalid_sets = set( M for M, pval in setToPval.iteritems() if isnan(pval) or -PTOL > pval or pval > 1+PTOL )
+    setToPval = dict( (M, pval) for M, pval in setToPval.iteritems() if not M in invalid_sets )
+    setToTime = dict( (M, runtime) for M, runtime in setToTime.iteritems() if not M in invalid_sets )
+    setToObs = dict( (M, obs) for M, obs in setToObs.iteritems() if not M in invalid_sets )
+        
+    if verbose > 0:
+        print '* Output sets: {}'.format(len(setToPval))
+        print '\t-Removed {} sets with NaN or invalid P-values'.format(len(invalid_sets))
+        print '\t-Ignored {} sets with Z >= T or a gene with no exclusive mutations'.format(len(sets)-tested_sets)
+        
     # Compute the FDRs
     tested_sets = setToPval.keys()
     pvals = [ setToPval[M] for M in tested_sets ]
-    setToFDR = dict(zip(tested_sets, benjamini_hochberg_correction(pvals)))
+    setToFDR = dict(zip(tested_sets, benjamini_hochberg_correction(pvals, independent=False)))
         
     return setToPval, setToTime, setToFDR, setToObs
 

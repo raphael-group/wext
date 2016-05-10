@@ -1,10 +1,9 @@
-#!/usr/bin/env python
-
 import numpy as np
 from numpy.linalg import det
 from scipy.optimize import fsolve
 from scipy.stats import norm
 import itertools
+from constants import *
 
 def condition(state):
 
@@ -26,11 +25,11 @@ def enumeration(k):
     for i, state in enumerate(states):
         a = [j for j, s in enumerate(state) if s==1]
         if condition(state):
-             a += [k]
+            a += [k]
         indices.append(a)
 
     # Identify the indices for each term of the gradient vector and the Hessian matrix.
-
+    
     gradient_indices = []
     for i in range(k+1):
         b = [j for j, a in enumerate(indices) if i in a]
@@ -43,21 +42,18 @@ def enumeration(k):
             c = [l for l, a in enumerate(indices) if i in a and j in a]
             b.append(c)
         hessian_indices.append(b)
-
+        
     return states, indices, gradient_indices, hessian_indices
-
-def saddlepoint(observed_t, observed_y, probabilities, enumeration_k=None):
+                                                                                                                                                                     
+def saddlepoint(observed_t, observed_y, probabilities, verbose=False):
 
     # Find the dimensions of the observations.
 
     k, n = np.shape(probabilities)
 
     # Enumerate the states for the observed variables and identify indices for the terms.
-
-    if enumeration_k:
-        states, indices, gradient_indices, hessian_indices = enumeration_k
-    else:
-        states, indices, gradient_indices, hessian_indices = enumeration(k)
+    
+    states, indices, gradient_indices, hessian_indices = enumeration(k)
 
     # Collect the observations and perform the continuity correction for t.
 
