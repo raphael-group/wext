@@ -1,4 +1,45 @@
 #!/usr/bin/env python
+import numpy as np
+
+# Add a y=x line to the given matplotlib axis
+def add_y_equals_x(ax, c='k', line_style='--', alpha=0.75):
+    # shamelessly stolen from http://goo.gl/9ZttXZ
+    lims = [
+        np.min([ax.get_xlim(), ax.get_ylim()]),  # min of both axes
+        np.max([ax.get_xlim(), ax.get_ylim()]),  # max of both axes
+    ]
+
+    # now plot both limits against eachother
+    ax.plot(lims, lims, line_style, c=c, alpha=alpha, zorder=0)
+    ax.set_aspect('equal')
+    ax.set_xlim(lims)
+    ax.set_ylim(lims)
+
+def aligned_plaintext_table(table, sep='\t', spaces=2):
+    """
+    Create and return an aligned plaintext table.
+
+    Arguments:
+    table: DSV table; string
+    sep: delimiter for DSV table; string; optional with tab as default
+    spaces: minimum number of spaces between columns; integer; optional with 2 as default
+    """
+    # Separate entries.
+    rows = [[entry.strip() for entry in row.split(sep)] for row in table.strip().split('\n')]
+
+    # Find numbers of rows and columns.
+    m = len(rows)
+    lengths = map(len, rows)
+    n = max(lengths)
+
+    # Pad rows with a deficient number of columns.
+    entries = [[rows[i][j] if j<lengths[i] else '' for j in range(n)] for i in range(m)]
+
+    # Find column widths.
+    sizes = [max(len(entries[i][j]) for i in range(m)) for j in range(n)]
+
+    # Return results.
+    return '\n'.join([''.join([entries[i][j].rjust(sizes[j]+spaces) for j in range(n)]).rstrip() for i in range(m)])
 
 def rank(a, reverse=False, ties=2):
     """
@@ -64,4 +105,3 @@ def rank(a, reverse=False, ties=2):
         z = tuple(z)
 
     return z
-

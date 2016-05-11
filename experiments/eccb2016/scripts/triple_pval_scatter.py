@@ -5,7 +5,7 @@ import matplotlib
 matplotlib.use('Agg')
 import sys, os, argparse, matplotlib.pyplot as plt, numpy as np, json
 from scipy.stats import spearmanr
-from add_y_equals_x import add_y_equals_x
+from helper import add_y_equals_x
 plt.style.use('ggplot')
 
 # Parse arguments
@@ -25,7 +25,7 @@ setToUnweighted = dict()
 for unweighted_file in args.unweighted_files:
     with open(unweighted_file, 'r') as IN:
         setToUnweighted.update( json.load(IN)['setToPval'] )
-        
+
 setToWeighted = dict()
 for weighted_file in args.weighted_files:
     with open(weighted_file, 'r') as IN:
@@ -35,7 +35,7 @@ setToPermuted = dict()
 for permuted_file in args.permutational_files:
     with open(permuted_file, 'r') as IN:
         setToPermuted.update( json.load(IN)['setToPval'] )
-        
+
 for M, pval in setToPermuted.iteritems():
     if pval == 0:
         setToPermuted[M] = 1./args.num_permutations
@@ -78,7 +78,11 @@ ax2.plot(ax2.get_xlim(), ax2.get_xlim(), ls="--", c=".3")
 
 # Output maximum deviation and correlations
 print 'Max deviation permutational vs. unweighted (1E-3 to 1E-5):',
-print max([ (x, y, np.abs(y/x)) for x, y in zip(xs, ys) if 1e-3 > x > 1e-5 ], key=lambda (x, y, z): z)
+deviations = [ (x, y, np.abs(y/x)) for x, y in zip(xs, ys) if 1e-3 > x > 1e-5 ]
+if deviations:
+    print max(deviations, key=lambda (x, y, z): z)
+else:
+    print 'None in p-value interval'
 
 print 'Unweighted correlation (all): \\rho={}'.format(unweighted_rho)
 print 'Unweighted correlation (P<0.001): \\rho={}'.format(unweighted_tail_rho)

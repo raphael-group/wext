@@ -47,7 +47,7 @@ for ax, cancer in zip(axes, args.cancers):
     patient_indices = sorted(range(len(patients)), key=lambda p: (patients[p] in hypermutators, len(patientToMutations[cancer][patients[p]])))
     gene_indices = sorted([ i for i, g in enumerate(genes) if g in geneToCases[cancer]], key=lambda g: len(geneToCases[cancer].get(genes[g], [])), reverse=True)
     weights = [ row[patient_indices] for row in cancerToWeights[cancer][gene_indices] ]
-    
+
     # Plot the weights matrix
     img = ax.matshow(weights, norm=matplotlib.colors.LogNorm())
     ax.plot([num_non_hypermutators, num_non_hypermutators], [0, len(weights)], '--', c='k')
@@ -58,7 +58,7 @@ for ax, cancer in zip(axes, args.cancers):
     ax.set_title(cancer)
     ax.set_aspect('auto')
     ax.tick_params(labelsize=6)
-    
+
     # Add a colorbar in a separate axis
     div = make_axes_locatable(ax)
     cax = div.append_axes("right", size="15%", pad=0.05)

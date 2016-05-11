@@ -4,7 +4,7 @@
 import matplotlib
 matplotlib.use('Agg')
 import sys, os, argparse, json, matplotlib.pyplot as plt, numpy as np, seaborn as sns, pandas as pd
-from ragrpyfu.io import aligned_plaintext_table
+from helper import aligned_plaintext_table
 plt.style.use('ggplot')
 
 # Parse required arguments

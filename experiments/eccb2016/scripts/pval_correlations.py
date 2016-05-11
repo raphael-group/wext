@@ -4,7 +4,7 @@
 import sys, os, argparse, pandas as pd
 from scipy.stats import spearmanr
 from itertools import combinations
-from ragrpyfu.io import aligned_plaintext_table
+from helper import aligned_plaintext_table
 
 # Parse arguments
 parser = argparse.ArgumentParser()
@@ -30,7 +30,7 @@ df = pd.DataFrame(items)
 
 # Compute the correlations with permutational
 # permutational_pvals_with_zeros = list(df.loc[df['Method'] == 'Permutational']['Raw P-value'])
-# all_indices = 
+# all_indices =
 tests       = ["Permutational", "Fisher's exact test", "Weighted (exact test)", "Weighted (saddlepoint)"]
 for val, indices in [("All", []), (0, 1./args.num_permutations), (1./args.num_permutations, 2)]:
     tbl = [list(tests)]

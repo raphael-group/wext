@@ -4,7 +4,7 @@
 import sys, os, argparse, json
 from collections import defaultdict
 from math import isnan
-from rank import rank
+from helper import rank
 
 # Parse arguments
 parser = argparse.ArgumentParser()
@@ -28,7 +28,7 @@ with open(args.lengths_file, 'r') as IN:
     geneToLengthRank.update(zip(geneToLength.keys(), length_ranks))
     threshold_gene = sorted(geneToLength.keys(), key=lambda g: geneToLengthRank[g])[args.length_threshold]
     print 'Length of {} longest gene: {}'.format(args.length_threshold, geneToLength[threshold_gene])
-    
+
 # Load the mutations
 with open(args.mutation_file, 'r') as IN:
     obj = json.load(IN)
@@ -51,7 +51,7 @@ with open(args.weighted_saddlepoint_file, 'r') as IN:
 
 print 'Triples with weighted FDR < {}: {}/{}'.format(args.fdr_cutoff, sum(1 for t, fdr in weightedFDR.iteritems() if fdr < args.fdr_cutoff), len(weightedFDR))
 print 'Triples with unweighted FDR < {}: {}/{}'.format(args.fdr_cutoff, sum(1 for t, fdr in unweightedFDR.iteritems() if fdr < args.fdr_cutoff), len(unweightedFDR))
-    
+
 # Rank triples by P-value
 triples = sorted(set(weightedPval.keys()) & set(unweightedPval.keys()))
 top_weighted_triples = sorted(triples, key=lambda t: weightedPval[t])

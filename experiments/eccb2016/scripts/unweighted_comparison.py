@@ -6,7 +6,7 @@ matplotlib.use('Agg')
 import sys, os, argparse, json, matplotlib.pyplot as plt, numpy as np, seaborn as sns, pandas as pd
 from scipy.stats import spearmanr
 plt.style.use('ggplot')
-from add_y_equals_x import add_y_equals_x
+from helper import add_y_equals_x
 
 # Parse arguments
 parser = argparse.ArgumentParser()

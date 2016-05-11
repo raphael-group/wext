@@ -11,7 +11,7 @@ plt.style.use('ggplot')
 # Load the weighted exclusivity test
 sys.path.append(os.getcwd())
 from weighted_exclusivity_test import *
-from add_y_equals_x import add_y_equals_x
+from helper import add_y_equals_x
 
 # Parse arguments
 parser = argparse.ArgumentParser()
@@ -34,7 +34,7 @@ for cancer, pairs_file in zip(args.cancers, args.pairs_files):
         setToPval[cancer][run_name] = obj['setToPval']
         setToRuntime[cancer][run_name] = obj['setToRuntime']
         sets[cancer] |= set(obj['setToPval'].keys())
-        
+
 # Construct the data
 cancers = sorted(set(args.cancers))
 runs = sorted(setToRuntime[cancers[0]].keys())
@@ -43,7 +43,7 @@ weighted_exact_pvals = []
 weighted_saddlepoint_pvals = []
 permutational_pvals = []
 comet_nt_pvals = [] #nt = not tail
-weighted_exact_nt_pvals = [] 
+weighted_exact_nt_pvals = []
 weighted_saddlepoint_nt_pvals = []
 permutational_nt_pvals = []
 items = []
@@ -95,7 +95,7 @@ ax2.set_yscale('log')
 ax2.set_title('(b)')
 add_y_equals_x(ax2)
 
-# Plot the weighted exact test against the 
+# Plot the weighted exact test against the
 ax3.plot(weighted_exact_pvals, weighted_saddlepoint_pvals, 'o', c='m', alpha=0.5, mew=0.0)
 ax3.set_xlabel("Weighted P-value (exact test)")
 ax3.set_ylabel("Weighted P-value (saddlepoint)")
@@ -117,7 +117,7 @@ with open(args.table_files[0], 'w') as OUT:
     OUT.write('All\t{}\t{}\t{}\n'.format(spearmanr(permutational_pvals, comet_pvals)[0], spearmanr(permutational_pvals, weighted_exact_pvals)[0], spearmanr(permutational_pvals, weighted_saddlepoint_pvals)[0]))
     OUT.write('H(M) >= 10^-4\t{}\t{}\t{}\n'.format(spearmanr(permutational_nt_pvals, comet_nt_pvals)[0], spearmanr(permutational_nt_pvals, weighted_exact_nt_pvals)[0],
                                                    spearmanr(permutational_nt_pvals, weighted_saddlepoint_nt_pvals)[0]))
-    
+
 # Output a table summarizing the runtimes (Table 3)
 tbl = ['#Method\tMinimum\tMedian\tMaximum\tTotal']
 for method in ["Weighted (Exact)", "Weighted (Saddlepoint)"]:
@@ -128,7 +128,7 @@ for method in ["Weighted (Exact)", "Weighted (Saddlepoint)"]:
 
 with open(args.table_files[1], 'w') as OUT:
     OUT.write('\n'.join(tbl) )
-    
+
 # Output to file
 plt.tight_layout()
 plt.savefig(args.figure_file)
