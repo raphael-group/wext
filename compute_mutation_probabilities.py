@@ -2,66 +2,91 @@
 
 # Load required modules
 import sys, os, argparse, json, numpy as np, multiprocessing as mp
+from collections import defaultdict
 
-# Load the weighted enrichment test, ensuring that
-# it is in the path (unless this script was moved)
-sys.path.append(os.path.dirname(os.path.realpath(__file__)))
+# Load the weighted exclusivity test
+this_dir = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(this_dir)
 from weighted_exclusivity_test import *
 
+# Argument parser
 def get_parser():
-    # Parse arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('-pf', '--permuted_files', required=True, type=str, nargs='*')
-    parser.add_argument('-mf', '--mutation_file', required=True, type=str)
-    parser.add_argument('-np', '--num_permutations', required=True, type=int)
-    parser.add_argument('-nc', '--num_cores', required=False, default=1, type=int)
-    parser.add_argument('-o', '--output_file', type=str, required=True)
+    parser.add_argument('-mf', '--mutation_file', type=str, required=True)
+    parser.add_argument('-wf', '--weights_file', type=str, required=False, default=None)
+    parser.add_argument('-pd', '--permutation_directory', type=str, required=False)
+    parser.add_argument('-np', '--num_permutations', type=int, required=True)
+    parser.add_argument('-si', '--start_index', type=int, required=False, default=1)
+    parser.add_argument('-q', '--swap_multiplier', type=int, required=False, default=100)
+    parser.add_argument('-nc', '--num_cores', type=int, required=False, default=1)
     parser.add_argument('-v', '--verbose', type=int, required=False, default=1, choices=range(5))
     return parser
 
-def compute_observed(mutation_files, geneToIndex, patientToIndex):
-    # Compute the exclusivity for each mutation file
-    observed = np.zeros((len(geneToIndex), len(patientToIndex)))
+def permute_matrices_wrapper(args): return permute_matrices(*args)
+def permute_matrices(edge_list, max_swaps, max_tries, seeds, verbose,
+                     m, n, num_edges, indexToGene, indexToPatient):
+    # Initialize our output
+    observed     = np.zeros((m, n))
+    permutations = []
+    for seed in seeds:
+        # Permute the edge list
+        permuted_edge_list = bipartite_edge_swap(edge_list, max_swaps, max_tries, seed, verbose,
+                                                 m, n, num_edges)
+        
+        # Recover the mapping of mutations from the permuted edge list
+        geneToCases  = defaultdict(set)
+        indices = [] 
+        for edge in permuted_edge_list:
+            gene, patient = indexToGene[edge[0]], indexToPatient[edge[1]]
+            geneToCases[gene].add(patient)
+            indices.append( (edge[0]-1, edge[1]-1) )
+            
+        # Record the permutation
+        observed[zip(*indices)] += 1.
+        permutations.append( dict(geneToCases=geneToCases, permutation_number=seed) )
 
-    for mutation_file in mutation_files:
-        # Load the mutations
-        with open(mutation_file, 'r') as IN:
-            permutedGeneToCases = json.load(IN)['geneToCases']
+    return observed/float(len(seeds)), permutations
 
-        # Increase the count for all the observed mutations in this
-        # permuted file
-        for g, cases in permutedGeneToCases.iteritems():
-            indices = [ (geneToIndex[g], patientToIndex[p]) for p in cases ]
-            observed[zip(*indices)] += 1.
-
-    return observed / float(len(mutation_files))
-
-def compute_observed_wrapper((mutation_files, geneToIndex, patientToIndex)):
-    return compute_observed(mutation_files, geneToIndex, patientToIndex)
-    
 def run( args ):
-    # Load the mutation data
+    # Do some additional argument checking
+    if not args.weights_file and not args.permutation_directory:
+        sys.stderr.write('You must set the weights file or permutation directory, '\
+                         'otherwise nothing will be output.')
+        sys.exit(1)
+    
+    # Load mutation data
     if args.verbose > 0:
         print '* Loading mutation data...'
-        
+
     mutation_data = load_mutation_data( args.mutation_file )
     genes, all_genes, patients, geneToCases, patientToMutations, params, hypermutators = mutation_data
-    num_all_genes, num_genes, num_patients = len(all_genes), len(genes), len(patients)
-    geneToIndex = dict(zip(all_genes, range(num_all_genes)))
-    patientToIndex = dict(zip(patients, range(num_patients)))
+
     geneToObserved = dict( (g, len(cases)) for g, cases in geneToCases.iteritems() )
     patientToObserved = dict( (p, len(muts)) for p, muts in patientToMutations.iteritems() )
-    
+    geneToIndex = dict( (g, i+1) for i, g in enumerate(all_genes) )
+    indexToGene = dict( (i+1, g) for i, g in enumerate(all_genes) )
+    patientToIndex = dict( (p, j+1) for j, p in enumerate(patients) )
+    indexToPatient = dict( (j+1, p) for j, p in enumerate(patients) )
+
+    edges = set()
+    for gene, cases in geneToCases.iteritems():
+        for patient in cases:
+            edges.add( (geneToIndex[gene], patientToIndex[patient]) )
+
+    edge_list = np.array(sorted(edges), dtype=np.int)
+
+    # Run the bipartite edge swaps
     if args.verbose > 0:
-        print '\tGenes:', num_all_genes
-        print '\tPatients:', num_patients
-        print '\tGenes mutated in at least one patient: {}'.format(num_genes)
-        
-    # Get the list of files we want to consider
-    permuted_files = args.permuted_files[:args.num_permutations]
-    print '* Analyzing {} permuted files...'.format(len(permuted_files))
-                                                    
-    # Set up the jobs
+        print '* Permuting matrices...'
+
+    m = len(all_genes)
+    n = len(patients)
+    num_edges = len(edges)
+    max_swaps = int(args.swap_multiplier*num_edges)
+    max_tries = 10**9
+    seeds = [ i+args.start_index for i in range(args.num_permutations) ]
+
+    # Run the bipartite edge swaps in parallel if more than one core indicated
     num_cores = args.num_cores if args.num_cores != -1 else mp.cpu_count()
     if num_cores != 1:
         pool = mp.Pool(num_cores)
@@ -69,30 +94,48 @@ def run( args ):
     else:
         map_fn = map
 
-    compute_args = [ (permuted_files[i::args.num_cores], geneToIndex, patientToIndex)
-                     for i in range(args.num_cores) ]
-
-    observeds = map_fn(compute_observed_wrapper, compute_args)
+    wrapper_args = [ (edge_list, max_swaps, max_tries, seeds[i::num_cores], 0, m,
+                      n, num_edges, indexToGene, indexToPatient) for i in range(num_cores) ]
+    results = map_fn(permute_matrices_wrapper, wrapper_args)
 
     if num_cores != 1:
         pool.close()
         pool.join()
 
-    # Merge the observeds
-    P = np.add.reduce(observeds) / float(len(observeds))
-
-    # Verify the weights
-    for g, obs in geneToObserved.iteritems():
-        assert( np.abs(P[geneToIndex[g]].sum() - obs) < 0.1)
-        
-    for p, obs in patientToObserved.iteritems():
-        assert( np.abs(P[:, patientToIndex[p]].sum() - obs) < 0.1)
-
-    # Add pseudocounts to entries with no mutations observed
-    P[P == 0] = 1./(2. * len(permuted_files))
+    # Create the weights file
+    if args.weights_file:
+        if args.verbose > 0:
+            print '* Saving weights file...'
             
-    # Output to file.
-    # The rows/columns preserve the order given by the mutation file.
-    np.save(args.output_file, P)
+        # Merge the observeds
+        observeds = [ observed for observed, _ in results ]
+        P = np.add.reduce(observeds) / float(len(observeds))
 
-if __name__ == '__main__': run(get_parser().parse_args(sys.argv[1:]))
+        # Verify the weights
+        for g, obs in geneToObserved.iteritems():
+            assert( np.abs(P[geneToIndex[g]-1].sum() - obs) < 0.1)
+        
+        for p, obs in patientToObserved.iteritems():
+            assert( np.abs(P[:, patientToIndex[p]-1].sum() - obs) < 0.1)
+
+        # Add pseudocounts to entries with no mutations observed
+        P[P == 0] = 1./(2. * args.num_permutations)
+            
+        # Output to file.
+        # The rows/columns preserve the order given by the mutation file.
+        np.save(args.weights_file, P)
+
+    # Save the permuted mutation data
+    if args.permutation_directory:
+        output_prefix = args.permutation_directory + '/permuted-mutations-{}.json'
+        if args.verbose > 0:
+            print '* Saving permuted mutation data...'
+        
+        for _, permutation_list in results:
+            for permutation in permutation_list:
+                # Output in adjacency list format
+                with open(output_prefix.format(permutation['permutation_number']), 'w') as OUT:
+                    permutation['params'] = params
+                    json.dump( params, OUT )
+
+if __name__ == '__main__': run( get_parser().parse_args(sys.argv[1:]) )

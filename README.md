@@ -12,18 +12,13 @@ Latest tested version in parentheses.
 
     b. SciPy (0.17.0)
 
-2. R (3.1.1)
-
-    a. BiReWire (1.8.0)
-3. gcc (4.9.2)
+2. gcc (4.9.2)
 
 We recommend using [`virtualenv`](https://virtualenv.pypa.io/en/latest/) to install the Python requirements. After installing `virtualenv`, you can install the Python requirements for the weighted exclusivity test as follows:
 
     virtualenv venv
     source venv/bin/activate
     pip install -r requirements.txt
-
-You can install the BiRewire R module following the instructions on [their website](https://www.bioconductor.org/packages/release/bioc/html/BiRewire.html).
 
 See the wiki for additional instructions on [Setup and installation](https://github.com/raphael-group/weighted-exclusivity-test/wiki/Setup-and-installation).
 
@@ -41,8 +36,7 @@ The C and Fortran extensions must be compiled before running the weighted exclus
 Before computing the weighted test, you need to process the input mutation data and generated permuted matrices.
 
 1. Process mutation data in MAF format with `process_mutations.py`. See [Process mutations](https://github.com/raphael-group/weighted-exclusivity-test/wiki/Process-mutations) on the wiki for details on usage and input.
-2. Generate permuted versions of the mutation data with `permute_matrix.py`. See [Permute mutation data](https://github.com/raphael-group/weighted-exclusivity-test/wiki/Permute-mutation-data) on the wiki for details on usage and input.
-3. Compute mutation probabilities using the permuted mutation data with `compute_mutation_probabilities.py`. See [Compute mutation probabilities](https://github.com/raphael-group/weighted-exclusivity-test/wiki/Compute-mutation-probabilities) on the wiki for details on usage and input.
+2. Generate permuted versions of the mutation data -- fixing the number of mutations per gene and per patient/sample -- and compute mutation probabilities with `compute_mutation_probabilities.py`. See [Compute mutation probabilities](https://github.com/raphael-group/weighted-exclusivity-test/wiki/Compute-mutation-probabilities) on the wiki for details on usage and input.
 
 #### Computing the weighted test ####
 
