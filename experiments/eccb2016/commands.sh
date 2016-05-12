@@ -94,7 +94,7 @@ mkdir -p $COADREAD_PERMUTATIONS $THCA_PERMUTATIONS $UCEC_PERMUTATIONS
 
 # Colorectal
 COADREAD_WEIGHTS=$WEIGHTS_DIR/coadread-np${WEIGHTS_SUFFIX}.npy
-python permute_matrix.py -mf $COADREAD_MUTATIONS -np $TOTAL_PERMUTATIONS \
+python permute_matrix.py -mf $COADREAD_MUTATIONS -np $TOTAL_PERMUTATIONS -nc $NUM_CORES \
        -o $COADREAD_PERMUTATIONS
 
 python compute_mutation_probabilities.py -pf $COADREAD_PERMUTATIONS/*.json \
@@ -103,7 +103,7 @@ python compute_mutation_probabilities.py -pf $COADREAD_PERMUTATIONS/*.json \
 
 # Thyroid
 THCA_WEIGHTS=$WEIGHTS_DIR/thca-np${WEIGHTS_SUFFIX}.npy
-python permute_matrix.py -mf $THCA_MUTATIONS -np $TOTAL_PERMUTATIONS \
+python permute_matrix.py -mf $THCA_MUTATIONS -np $TOTAL_PERMUTATIONS -nc $NUM_CORES \
        -o $THCA_PERMUTATIONS
 
 python compute_mutation_probabilities.py -pf $THCA_PERMUTATIONS/*.json \
@@ -112,7 +112,7 @@ python compute_mutation_probabilities.py -pf $THCA_PERMUTATIONS/*.json \
 
 # Endometrial
 UCEC_WEIGHTS=$WEIGHTS_DIR/ucec-np${WEIGHTS_SUFFIX}.npy
-python permute_matrix.py -mf $UCEC_MUTATIONS -np $TOTAL_PERMUTATIONS \
+python permute_matrix.py -mf $UCEC_MUTATIONS -np $TOTAL_PERMUTATIONS -nc $NUM_CORES \
        -o $UCEC_PERMUTATIONS
 
 python compute_mutation_probabilities.py -pf $UCEC_PERMUTATIONS/*.json \
@@ -255,7 +255,7 @@ python compute_exclusivity.py -mf $UCEC_MUTATIONS -nc $NUM_CORES -k 3 \
 # CREATE FIGURES AND TABLES                                                    #
 ################################################################################
 
-# FIGURE 1: Distribution of number of mutations per sample 
+# FIGURE 1: Distribution of number of mutations per sample
 python $SCRIPTS_DIR/sample_mutation_frequency_plot.py -mf $THCA_MUTATIONS \
        $COADREAD_MUTATIONS $UCEC_MUTATIONS -c THCA COADREAD UCEC \
        -o $FIGURES_DIR/Figure1.pdf

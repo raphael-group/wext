@@ -29,10 +29,11 @@ See the wiki for additional instructions on [Setup and installation](https://git
 
 ### Setup ###
 
-The C extensions must be compiled before running the weighted exclusivity test:
+The C and Fortran extensions must be compiled before running the weighted exclusivity test:
 
     cd weighted_exclusivity_test
     python setup.py build
+    f2py -c src/fortran/bipartite_edge_swap_module.f95 -m bipartite_edge_swap_module
 
 ### Usage ###
 
