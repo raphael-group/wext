@@ -9,36 +9,34 @@ THCA_MIN_FREQ=5
 UCEC_MIN_FREQ=30
 LENGTH_THRESHOLD=600
 FDR_CUTOFF=0.001
-TOTAL_PERMUTATIONS=10000 # set to 1000000 for ECCB 2016 submission
-PAIRS_PERMUTATIONS=10000
+TOTAL_PERMUTATIONS=1000
+PAIRS_PERMUTATIONS=1000
 WEIGHTS_PERMUTATIONS=1000
 
 ################################################################################
 # SET UP DIRECTORIES                                                           #
 ################################################################################
-CODE_DIR=../../
-EXPERIMENT_DIR=experiments/eccb2016
-DATA_DIR=$EXPERIMENT_DIR/data
-SCRIPTS_DIR=$EXPERIMENT_DIR/scripts
-FIGURES_DIR=$EXPERIMENT_DIR/figures
-TABLES_DIR=$EXPERIMENT_DIR/tables
+CODE_DIR=../
+TEST_DIR=tests
+DATA_DIR=$TEST_DIR/data
+SCRIPTS_DIR=$TEST_DIR/scripts
+TABLES_DIR=$TEST_DIR/tables
 MUTATIONS_DIR=$DATA_DIR/mutations
-PERMUTED_DIR=$DATA_DIR/permuted
 WEIGHTS_DIR=$DATA_DIR/weights
 
-OUTPUT_DIR=$EXPERIMENT_DIR/output
+OUTPUT_DIR=$TEST_DIR/output
 PAIRS_DIR=$OUTPUT_DIR/pairs
 TRIPLES_DIR=$OUTPUT_DIR/triples
 GENE_LENGTH_FILE=$DATA_DIR/gene-lengths.tsv
 
 cd $CODE_DIR
-mkdir -p $MUTATIONS_DIR $WEIGHTS_DIR $PERMUTED_DIR $OUTPUT_DIR $PAIRS_DIR
-mkdir -p $TRIPLES_DIR $TABLES_DIR $FIGURES_DIR
+mkdir -p $MUTATIONS_DIR $WEIGHTS_DIR $OUTPUT_DIR $PAIRS_DIR
+mkdir -p $TRIPLES_DIR $TABLES_DIR
 
 ################################################################################
 # DOWNLOAD AND UNPACK DATA                                                     #
 ################################################################################
-cd $EXPERIMENT_DIR
+cd $TEST_DIR
 wget http://compbio-research.cs.brown.edu/projects/weighted-exclusivity-test/data/eccb2016.tar
 tar -xvf eccb2016.tar && rm eccb2016.tar
 
@@ -80,17 +78,11 @@ python $SCRIPTS_DIR/remove_genes_with_no_length.py -lf $GENE_LENGTH_FILE \
        -o $UCEC_MUTATIONS
 
 ################################################################################
-# GENERATE PERMUTED MATRICES AND COMPUTE WEIGHTS                               #
+# COMPUTE WEIGHTS                                                              #
 ################################################################################
 WEIGHTS_SUFFIX=`printf %.E $WEIGHTS_PERMUTATIONS`
 PAIRS_PERMUTATION_SUFFIX=`printf %.E $PAIRS_PERMUTATIONS`
 TOTAL_PERMUTATION_SUFFIX=`printf %.E $PAIRS_PERMUTATIONS`
-
-# Set up directories
-COADREAD_PERMUTATIONS=$PERMUTED_DIR/coadread
-THCA_PERMUTATIONS=$PERMUTED_DIR/thca
-UCEC_PERMUTATIONS=$PERMUTED_DIR/ucec
-mkdir -p $COADREAD_PERMUTATIONS $THCA_PERMUTATIONS $UCEC_PERMUTATIONS
 
 # Colorectal
 COADREAD_WEIGHTS=$WEIGHTS_DIR/coadread-np${WEIGHTS_SUFFIX}.npy
@@ -126,13 +118,11 @@ python compute_exclusivity.py -mf $COADREAD_MUTATIONS -nc $NUM_CORES -k 2\
        -f $COADREAD_MIN_FREQ -o $COADREAD_WEIGHTED_SADDLEPOINT_PAIRS \
        Weighted -m Saddlepoint -wf $COADREAD_WEIGHTS
 
-
 # THYROID
 THCA_WEIGHTED_SADDLEPOINT_PAIRS=$PAIRS_DIR/thca-pairs-weighted-saddlepoint-nw${WEIGHTS_SUFFIX}.json
 python compute_exclusivity.py -mf $THCA_MUTATIONS -nc $NUM_CORES -k 2\
        -f $THCA_MIN_FREQ -o $THCA_WEIGHTED_SADDLEPOINT_PAIRS \
        Weighted -m Saddlepoint -wf $THCA_WEIGHTS
-
 
 # Endometrial
 UCEC_WEIGHTED_SADDLEPOINT_PAIRS=$PAIRS_DIR/ucec-pairs-weighted-saddlepoint-nw${WEIGHTS_SUFFIX}.json
