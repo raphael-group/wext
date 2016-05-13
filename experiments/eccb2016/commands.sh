@@ -9,8 +9,8 @@ THCA_MIN_FREQ=5
 UCEC_MIN_FREQ=30
 LENGTH_THRESHOLD=600
 FDR_CUTOFF=0.001
-TOTAL_PERMUTATIONS=1000 # set to 1000000 for ECCB 2016 submission
-PAIRS_PERMUTATIONS=1000
+TOTAL_PERMUTATIONS=10000 # set to 1000000 for ECCB 2016 submission
+PAIRS_PERMUTATIONS=10000
 WEIGHTS_PERMUTATIONS=1000
 
 ################################################################################
@@ -178,24 +178,24 @@ python compute_exclusivity.py -mf $UCEC_MUTATIONS -nc $NUM_CORES -k 3 \
        Weighted -m Saddlepoint -wf $UCEC_WEIGHTS
 
 ################################################################################
-# CREATE FIGURES AND TABLES                                                    #
+# SUMMARIZE RESULTS                                                            #
 ################################################################################
 
-# TABLE 4: THCA results
+# THCA results
 echo "THCA"
 python $SCRIPTS_DIR/results_table.py -lf $GENE_LENGTH_FILE \
        -mf $THCA_MUTATIONS -wf $THCA_WEIGHTED_SADDLEPOINT_TRIPLES \
        -uf $THCA_UNWEIGHTED_SADDLEPOINT_TRIPLES -nt 5 -lt $LENGTH_THRESHOLD \
        -f $FDR_CUTOFF -o $TABLES_DIR/Table4
 
-# TABLE 5: COADREAD results
+# COADREAD results
 echo "COADREAD"
 python $SCRIPTS_DIR/results_table.py -lf $GENE_LENGTH_FILE \
        -mf $COADREAD_MUTATIONS -wf $COADREAD_WEIGHTED_SADDLEPOINT_TRIPLES \
        -uf $COADREAD_UNWEIGHTED_SADDLEPOINT_TRIPLES -nt 5 -lt $LENGTH_THRESHOLD \
        -f $FDR_CUTOFF -o $TABLES_DIR/Table5
 
-# TABLE 6: UCEC results
+# UCEC results
 echo "UCEC"
 python $SCRIPTS_DIR/results_table.py -lf $GENE_LENGTH_FILE \
        -mf $UCEC_MUTATIONS -wf $UCEC_WEIGHTED_SADDLEPOINT_TRIPLES \

@@ -94,8 +94,8 @@ def run( args ):
     else:
         map_fn = map
 
-    wrapper_args = [ (edge_list, max_swaps, max_tries, seeds[i::10*num_cores], 0, m,
-                      n, num_edges, indexToGene, indexToPatient) for i in range(10*num_cores) ]
+    wrapper_args = [ (edge_list, max_swaps, max_tries, seeds[i::num_cores], 0, m,
+                      n, num_edges, indexToGene, indexToPatient) for i in range(num_cores) ]
     results = map_fn(permute_matrices_wrapper, wrapper_args)
 
     if num_cores != 1:
