@@ -32,15 +32,15 @@ def permute_matrices(edge_list, max_swaps, max_tries, seeds, verbose,
         # Permute the edge list
         permuted_edge_list = bipartite_edge_swap(edge_list, max_swaps, max_tries, seed, verbose,
                                                  m, n, num_edges)
-        
+
         # Recover the mapping of mutations from the permuted edge list
         geneToCases  = defaultdict(set)
-        indices = [] 
+        indices = []
         for edge in permuted_edge_list:
             gene, patient = indexToGene[edge[0]], indexToPatient[edge[1]]
             geneToCases[gene].add(patient)
             indices.append( (edge[0]-1, edge[1]-1) )
-            
+
         # Record the permutation
         observed[zip(*indices)] += 1.
         permutations.append( dict(geneToCases=geneToCases, permutation_number=seed) )
@@ -53,7 +53,7 @@ def run( args ):
         sys.stderr.write('You must set the weights file or permutation directory, '\
                          'otherwise nothing will be output.')
         sys.exit(1)
-    
+
     # Load mutation data
     if args.verbose > 0:
         print '* Loading mutation data...'
@@ -94,8 +94,8 @@ def run( args ):
     else:
         map_fn = map
 
-    wrapper_args = [ (edge_list, max_swaps, max_tries, seeds[i::num_cores], 0, m,
-                      n, num_edges, indexToGene, indexToPatient) for i in range(num_cores) ]
+    wrapper_args = [ (edge_list, max_swaps, max_tries, seeds[i::10*num_cores], 0, m,
+                      n, num_edges, indexToGene, indexToPatient) for i in range(10*num_cores) ]
     results = map_fn(permute_matrices_wrapper, wrapper_args)
 
     if num_cores != 1:
@@ -106,7 +106,7 @@ def run( args ):
     if args.weights_file:
         if args.verbose > 0:
             print '* Saving weights file...'
-            
+
         # Merge the observeds
         observeds = [ observed for observed, _ in results ]
         P = np.add.reduce(observeds) / float(len(observeds))
@@ -114,13 +114,13 @@ def run( args ):
         # Verify the weights
         for g, obs in geneToObserved.iteritems():
             assert( np.abs(P[geneToIndex[g]-1].sum() - obs) < 0.1)
-        
+
         for p, obs in patientToObserved.iteritems():
             assert( np.abs(P[:, patientToIndex[p]-1].sum() - obs) < 0.1)
 
         # Add pseudocounts to entries with no mutations observed
         P[P == 0] = 1./(2. * args.num_permutations)
-            
+
         # Output to file.
         # The rows/columns preserve the order given by the mutation file.
         np.save(args.weights_file, P)
@@ -130,7 +130,7 @@ def run( args ):
         output_prefix = args.permutation_directory + '/permuted-mutations-{}.json'
         if args.verbose > 0:
             print '* Saving permuted mutation data...'
-        
+
         for _, permutation_list in results:
             for permutation in permutation_list:
                 # Output in adjacency list format

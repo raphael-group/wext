@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
-"""Compiles the C modules used by the weighted enrichment test."""
+"""Compiles the C modules used by the weighted exclusivity test."""
 
 # Load required modules
 from distutils.core import setup, Extension
-import subprocess, numpy, os
+import numpy, os
 
 thisDir = os.path.dirname(os.path.realpath(__file__))
 
