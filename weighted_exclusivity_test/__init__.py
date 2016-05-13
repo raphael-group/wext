@@ -10,3 +10,4 @@ import cpoibin
 from saddlepoint import saddlepoint
 from comet_exact_test import comet_exact_test
 from exclusivity_tests import weighted_test, unweighted_test
+from bipartite_edge_swap_module import bipartite_edge_swap
