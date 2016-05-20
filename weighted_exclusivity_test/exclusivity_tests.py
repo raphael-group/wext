@@ -7,6 +7,7 @@ from exact import exact_test
 import cpoibin
 from saddlepoint import saddlepoint
 from comet_exact_test import comet_exact_test
+import warnings
 
 # Perform the weighted exclusivity test using the given method.
 def weighted_test(t, x, p, method=EXACT, verbose=0):
@@ -28,7 +29,10 @@ def weighted_test(t, x, p, method=EXACT, verbose=0):
     if method == EXACT:
         p_value = exact_test( t, x, p, verbose )
     if method == SADDLEPOINT:
-        p_value = saddlepoint( t, x, p, verbose )
+        # Ignore warnings
+        with warnings.catch_warnings() as e:
+            warnings.simplefilter("ignore")
+            p_value = saddlepoint( t, x, p, verbose )
 
     return p_value
 
@@ -37,7 +41,11 @@ def unweighted_test(t, x, tbl, method=EXACT, verbose=0):
     N = sum(tbl)
     if method == SADDLEPOINT:
         p = [ [ float(x_i)/N ] * N for x_i in x ]
-        p_value = saddlepoint( t, x, p )
+        # Ignore warnings
+        with warnings.catch_warnings() as e:
+            warnings.simplefilter("ignore")
+            p_value = saddlepoint( t, x, p )
+            
     elif method == EXACT:
         k = len(x)
         assert( tbl and len(tbl) == 2**k )
