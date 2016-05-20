@@ -23,11 +23,15 @@ def T(M, geneToCases):
 def permutational_dist_wrapper( args ): return permutational_dist( *args )
 def permutational_dist( sets, permuted_files ):
     setToDist, setToTime = defaultdict(list), defaultdict(int)
-    for pf in permuted_files:
+    for pf_group in permuted_files:
         # Load the file, keeping track of how long it takes
         reading_start = time()
-        with open(pf, 'r') as IN:
-            permutedGeneToCases = dict( (g, set(cases)) for g, cases in json.load(IN)['geneToCases'].iteritems() )
+        permutedGeneToCases = defaultdict(set)
+        for pf in pf_group:
+            with open(pf, 'r') as IN:
+                for g, cases in json.load(IN)['geneToCases'].iteritems():
+                    permutedGeneToCases[g] |= set(cases)
+                    
         reading_time = time() - reading_start
 
         # Iterate through the sets, keeping track of how long
