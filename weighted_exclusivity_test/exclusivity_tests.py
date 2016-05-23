@@ -23,6 +23,9 @@ def weighted_test(t, x, p, method=EXACT, verbose=0):
     assert(all(a<=len(b) for a, b in zip(x, p)))
     # Check that the number of mutually exclusive mutations is not greater than the total number of mutations.
     assert(t<=sum(x))
+    #Check that we've implemented the given set size with the exact test
+    if method == EXACT:
+        assert( len(x) in WEIGHTED_SADDLEPOINT_SET_SIZES_IMPLEMENTED )
 
     p = [ list(p_g) for p_g in p ]
 
@@ -45,7 +48,7 @@ def unweighted_test(t, x, tbl, method=EXACT, verbose=0):
         with warnings.catch_warnings() as e:
             warnings.simplefilter("ignore")
             p_value = saddlepoint( t, x, p )
-            
+
     elif method == EXACT:
         k = len(x)
         assert( tbl and len(tbl) == 2**k )

@@ -4,7 +4,7 @@
 PTOL = 10**-3
 
 # Set sizes implemented
-SET_SIZES_IMPLEMENTED = set([2, 3])
+WEIGHTED_SADDLEPOINT_SET_SIZES_IMPLEMENTED = set([2, 3])
 
 # Different methods for computing the P-value
 EXACT        = 1
@@ -22,4 +22,3 @@ testToName    = { UNWEIGHTED: "Unweighted", WEIGHTED: "Weighted", PERMUTATIONAL:
 nameToTest    = dict(Unweighted=UNWEIGHTED, Weighted=WEIGHTED, Permutational=PERMUTATIONAL)
 TESTS         = set(testToName.keys())
 TEST_NAMES    = set(testToName.values())
-

@@ -15,6 +15,7 @@ from weighted_exclusivity_test import *
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('-mf', '--mutation_files', type=str, required=True, nargs='*')
+    parser.add_argument('-paf', '--patient_annotation_file', type=str, required=False, default=None)
     parser.add_argument('-o', '--output_prefix', type=str, required=True)
     parser.add_argument('-f', '--min_frequency', type=int, default=1, required=False)
     parser.add_argument('-c', '--num_cores', type=int, required=False, default=1)
@@ -23,7 +24,7 @@ def get_parser():
 
     # Search strategy
     parser.add_argument('-s', '--search_strategy', type=str, choices=['Enumerate', 'MCMC'], default='MCMC', required=False)
-    parser.add_argument('-ks', '--gene_set_sizes', nargs="*", type=int, required=True, choices=SET_SIZES_IMPLEMENTED)
+    parser.add_argument('-ks', '--gene_set_sizes', nargs="*", type=int, required=True)
     parser.add_argument('-N', '--num_iterations', type=int, default=pow(10, 3))
     parser.add_argument('-nc', '--num_chains', type=int, default=1)
     parser.add_argument('-sl', '--step_length', type=int, default=100)
@@ -114,10 +115,28 @@ def run( args ):
     geneToIndex  = dict(zip(sorted(genes), range(num_genes)))
     gene_indices = [ geneToIndex[g] for g in genes ]
 
+    # Load patient annotations (if provided) and add per patient events
+    if args.patient_annotation_file:
+        annotationToPatients = load_patient_annotation_file(args.patient_annotation_file)
+        annotations = set( annotationToPatients.keys() )
+        genes |= annotations
+
+        # Since we are looking for co-occurrence between exclusive sets with
+        # an annotation A, we add events for each patient NOT annotated by
+        # the given annotation
+        for annotation, cases in annotationToPatients.iteritems():
+            not_cases = patients - cases
+            if len(not_cases) > 0:
+                geneToCases[annotation] = not_cases
+    else:
+        annotations = set()
+
     if args.verbose > 0:
         print '- Genes:', num_all_genes
         print '- Patients:', num_patients
         print '- Genes mutated in >={} patients: {}'.format(args.min_frequency, num_genes)
+        if args.patient_annotation_file:
+            print '- Patient annotations:', len(annotations)
 
     # Load the weights (if necessary)
     test = nameToTest[args.test]
@@ -155,7 +174,7 @@ def run( args ):
 
     # MCMC
     elif args.search_strategy == 'MCMC':
-        mcmc_params = dict(niters=args.num_iterations, nchains=args.num_chains, step_len=args.step_length, verbose=args.verbose, seed=args.mcmc_seed)
+        mcmc_params = dict(annotations=annotations, niters=args.num_iterations, nchains=args.num_chains, step_len=args.step_length, verbose=args.verbose, seed=args.mcmc_seed)
         setsToFreq, setToPval, setToObs = mcmc(args.gene_set_sizes, geneToCases, num_patients, method, test, geneToP, **mcmc_params)
         output_mcmc(args, setsToFreq, setToPval, setToObs)
     else:

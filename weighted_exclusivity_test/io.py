@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
+# Load required modules
 import sys, os, json, numpy as np
+from collections import defaultdict
 from constants import *
 
 # Load mutation data from one of our processed JSON file
@@ -18,6 +20,16 @@ def load_mutation_data( mutation_file, min_freq=1 ):
     genes = set( g for g, cases in geneToCases.iteritems() if len(cases) >= min_freq )
 
     return genes, all_genes, patients, geneToCases, patientToMutations, params, hypermutators
+
+# Load a patient annotation file, optionally restricting to the patients
+# in the provided collection
+def load_patient_annotation_file(patient_annotation_file):
+    with open(patient_annotation_file,'r') as IN:
+        arrs = [ l.rstrip('\n').split('\t') for l in IN if not l.startswith('#') ]
+        annotationToPatients = defaultdict( set )
+        for patient, annotation in arrs:
+            annotationToPatients[annotation].add( patient )
+    return annotationToPatients
 
 # Converts keys from an iterable to tab-separated, so the dictionary can be
 # output as JSON
