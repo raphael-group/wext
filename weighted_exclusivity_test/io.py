@@ -34,10 +34,10 @@ def create_tbl_header( k ):
     return '\t'.join([ bin_format.format(i) for i in range(2**k) ])
 
 # Output a run to file as a table or JSON file
-def output_enumeration_table(args, setToPval, setToRuntime, setToFDR, setToObs ):
+def output_enumeration_table(args, k, setToPval, setToRuntime, setToFDR, setToObs ):
     is_permutational = nameToTest[args.test] == PERMUTATIONAL
-    extension = '.json' if args.json_format else '.tsv'
-    with open(args.output_prefix + extension, 'w') as OUT:
+    extension = 'json' if args.json_format else 'tsv'
+    with open('{}-k{}.{}'.format(args.output_prefix, k, extension), 'w') as OUT:
         # Tab-separated
         if not args.json_format:
             # Construct the rows

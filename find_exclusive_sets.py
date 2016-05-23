@@ -137,19 +137,20 @@ def run( args ):
 
     #Enumeration
     if args.search_strategy == 'Enumerate':
-        # Create a list of sets to test
-        sets = list( frozenset(t) for t in combinations(genes, args.gene_set_sizes[0]) )
-        num_sets = len(sets)
+        for k in args.gene_set_sizes:
+            # Create a list of sets to test
+            sets = list( frozenset(t) for t in combinations(genes, k) )
+            num_sets = len(sets)
 
-        if args.verbose  > 0: print '* Testing {} sets...'.format(num_sets)
-        if test == PERMUTATIONAL:
-            # Run the permutational
-            setToPval, setToRuntime, setToFDR, setToObs = permutational_test( sets, geneToCases, num_patients, permuted_files, args.num_cores, args.verbose )
-        else:
-            # Run the test
-            method = nameToMethod[args.method]
-            setToPval, setToRuntime, setToFDR, setToObs = test_sets(sets, geneToCases, num_patients, method, test, geneToP, args.num_cores, args.verbose)
-        output_enumeration_table( args, setToPval, setToRuntime, setToFDR, setToObs )
+            if args.verbose  > 0: print '* Testing {} sets...'.format(num_sets)
+            if test == PERMUTATIONAL:
+                # Run the permutational
+                setToPval, setToRuntime, setToFDR, setToObs = permutational_test( sets, geneToCases, num_patients, permuted_files, args.num_cores, args.verbose )
+            else:
+                # Run the test
+                method = nameToMethod[args.method]
+                setToPval, setToRuntime, setToFDR, setToObs = test_sets(sets, geneToCases, num_patients, method, test, geneToP, args.num_cores, args.verbose)
+            output_enumeration_table( args, k, setToPval, setToRuntime, setToFDR, setToObs )
 
     # MCMC
     elif args.search_strategy == 'MCMC':
