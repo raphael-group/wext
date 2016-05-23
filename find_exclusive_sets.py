@@ -85,7 +85,7 @@ def run( args ):
 
     # Load the mutation data
     if args.verbose > 0:
-        print '* Loading mutation data...'
+        print ('-' * 30), 'Input Mutation Data', ('-' * 29)
 
     typeToGeneIndex = []
     genes, patients, geneToCases, typeToGenes = set(), set(), defaultdict(set), []
@@ -115,9 +115,9 @@ def run( args ):
     gene_indices = [ geneToIndex[g] for g in genes ]
 
     if args.verbose > 0:
-        print '\tGenes:', num_all_genes
-        print '\tPatients:', num_patients
-        print '\tGenes mutated in >={} patients: {}'.format(args.min_frequency, num_genes)
+        print '- Genes:', num_all_genes
+        print '- Patients:', num_patients
+        print '- Genes mutated in >={} patients: {}'.format(args.min_frequency, num_genes)
 
     # Load the weights (if necessary)
     test = nameToTest[args.test]
@@ -137,12 +137,13 @@ def run( args ):
 
     #Enumeration
     if args.search_strategy == 'Enumerate':
+        if args.verbose > 0: print ('-' * 31), 'Enumerating Sets', ('-' * 31)
         for k in args.gene_set_sizes:
             # Create a list of sets to test
             sets = list( frozenset(t) for t in combinations(genes, k) )
             num_sets = len(sets)
 
-            if args.verbose  > 0: print '* Testing {} sets...'.format(num_sets)
+            if args.verbose  > 0: print 'k={}: {} sets...'.format(k, num_sets)
             if test == PERMUTATIONAL:
                 # Run the permutational
                 setToPval, setToRuntime, setToFDR, setToObs = permutational_test( sets, geneToCases, num_patients, permuted_files, args.num_cores, args.verbose )

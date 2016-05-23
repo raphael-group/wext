@@ -19,7 +19,7 @@ def T(M, geneToCases):
     sampleToCount = Counter( s for g in M for s in geneToCases.get(g, []) )
     return sum( 1 for sample, count in sampleToCount.iteritems() if count == 1 )
 
-# Compute the permutational 
+# Compute the permutational
 def permutational_dist_wrapper( args ): return permutational_dist( *args )
 def permutational_dist( sets, permuted_files ):
     setToDist, setToTime = defaultdict(list), defaultdict(int)
@@ -31,7 +31,7 @@ def permutational_dist( sets, permuted_files ):
             with open(pf, 'r') as IN:
                 for g, cases in json.load(IN)['geneToCases'].iteritems():
                     permutedGeneToCases[g] |= set(cases)
-                    
+
         reading_time = time() - reading_start
 
         # Iterate through the sets, keeping track of how long
@@ -40,7 +40,7 @@ def permutational_dist( sets, permuted_files ):
             start = time()
             setToDist[M].append( T(M, permutedGeneToCases) )
             setToTime[M] += reading_time + (time() - start)
-            
+
     return setToDist, setToTime
 
 def permutational_test(sets, geneToCases, num_patients, permuted_files, num_cores=1, verbose=0):
@@ -51,12 +51,12 @@ def permutational_test(sets, geneToCases, num_patients, permuted_files, num_core
         map_fn = pool.map
     else:
         map_fn = map
-        
+
     # Filter the sets based on the observed values
     k = len(next(iter(sets)))
     setToObs = dict( (M, observed_values(M, num_patients, geneToCases)) for M in sets )
     sets = set( M for M, (X, T, Z, tbl) in setToObs.iteritems() if testable_set(k, T, Z, tbl) )
-    
+
     # Compute the distribution of exclusivity for each pair across the permuted files
     np    = float(len(permuted_files))
     args  = [ (sets, permuted_files[i::num_cores]) for i in range(num_cores) ]
@@ -85,7 +85,7 @@ def permutational_test(sets, geneToCases, num_patients, permuted_files, num_core
     tested_sets = setToPval.keys()
     pvals = [ setToPval[M] for M in tested_sets ]
     setToFDR = dict(zip(tested_sets, benjamini_hochberg_correction(pvals, independent=False)))
-        
+
     return setToPval, setToTime, setToFDR, setToObs
 
 ################################################################################
@@ -117,7 +117,7 @@ def observed_values( M, N, geneToCases ):
     # Finish the table and compute X
     tbl[0] = N - len(mutated_patients)
     X = [ len(geneToCases[g]) for g in M ]
-    
+
     return X, T, Z, tbl
 
 # Test the given sets with the given method and test
@@ -135,7 +135,7 @@ def test_set_group( sets, geneToCases, num_patients, method, test, P=None, verbo
 
         # Do some simple mutation processing
         X, T, Z, tbl = setToObs[M] = observed_values(sorted(M), num_patients, geneToCases )
-        
+
         # Ignore the opposite tail, where we have more co-occurrences than exclusivity
         if not testable_set(k, T, Z, tbl): continue
 
@@ -147,7 +147,7 @@ def test_set_group( sets, geneToCases, num_patients, method, test, P=None, verbo
             setToPval[M] = unweighted_test( T, X, tbl, method )
         else:
             raise NotImplementedError("Test {} not implemented".format(testToName[test]))
-        
+
         setToTime[M] = time() - start
 
     if verbose > 1: print
@@ -185,17 +185,17 @@ def test_sets( sets, geneToCases, num_patients, method, test, P=None, num_cores=
     setToPval = dict( (M, pval) for M, pval in setToPval.iteritems() if not M in invalid_sets )
     setToTime = dict( (M, runtime) for M, runtime in setToTime.iteritems() if not M in invalid_sets )
     setToObs = dict( (M, obs) for M, obs in setToObs.iteritems() if not M in invalid_sets )
-        
+
     if verbose > 0:
-        print '* Output sets: {}'.format(len(setToPval))
-        print '\t-Removed {} sets with NaN or invalid P-values'.format(len(invalid_sets))
-        print '\t-Ignored {} sets with Z >= T or a gene with no exclusive mutations'.format(len(sets)-tested_sets)
-        
+        print '- Output {} set'.format(len(setToPval))
+        print '\tRemoved {} sets with NaN or invalid P-values'.format(len(invalid_sets))
+        print '\tIgnored {} sets with Z >= T or a gene with no exclusive mutations'.format(len(sets)-tested_sets)
+
     # Compute the FDRs
     tested_sets = setToPval.keys()
     pvals = [ setToPval[M] for M in tested_sets ]
     setToFDR = dict(zip(tested_sets, benjamini_hochberg_correction(pvals, independent=False)))
-        
+
     return setToPval, setToTime, setToFDR, setToObs
 
 ################################################################################
