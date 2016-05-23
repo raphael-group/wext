@@ -157,7 +157,7 @@ def run( args ):
     #Enumeration
     if args.search_strategy == 'Enumerate':
         if args.verbose > 0: print ('-' * 31), 'Enumerating Sets', ('-' * 31)
-        for k in args.gene_set_sizes:
+        for k in set( args.gene_set_sizes ): # we don't need to enumerate the same size more than once
             # Create a list of sets to test
             sets = list( frozenset(t) for t in combinations(genes, k) )
             num_sets = len(sets)

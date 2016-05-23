@@ -187,7 +187,7 @@ def test_sets( sets, geneToCases, num_patients, method, test, P=None, num_cores=
     setToObs = dict( (M, obs) for M, obs in setToObs.iteritems() if not M in invalid_sets )
 
     if verbose > 0:
-        print '- Output {} set'.format(len(setToPval))
+        print '- Output {} sets'.format(len(setToPval))
         print '\tRemoved {} sets with NaN or invalid P-values'.format(len(invalid_sets))
         print '\tIgnored {} sets with Z >= T or a gene with no exclusive mutations'.format(len(sets)-tested_sets)
 
