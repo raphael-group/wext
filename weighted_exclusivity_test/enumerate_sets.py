@@ -134,7 +134,8 @@ def test_set_group( sets, geneToCases, num_patients, method, test, P=None, verbo
             sys.stdout.flush()
 
         # Do some simple mutation processing
-        X, T, Z, tbl = setToObs[M] = observed_values(sorted(M), num_patients, geneToCases )
+        sorted_M = sorted(M)
+        X, T, Z, tbl = setToObs[M] = observed_values(sorted_M, num_patients, geneToCases )
         
         # Ignore the opposite tail, where we have more co-occurrences than exclusivity
         if not testable_set(k, T, Z, tbl): continue
@@ -142,7 +143,7 @@ def test_set_group( sets, geneToCases, num_patients, method, test, P=None, verbo
         # Compute the saddlepoint approximations
         start = time()
         if test == WEIGHTED:
-            setToPval[M] = weighted_test( T, X, [ P[g] for g in M ], method )
+            setToPval[M] = weighted_test( T, X, [ P[g] for g in sorted_M ], method )
         elif test == UNWEIGHTED:
             setToPval[M] = unweighted_test( T, X, tbl, method )
         else:
