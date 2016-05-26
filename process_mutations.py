@@ -25,7 +25,7 @@ def get_parser():
 
 def process_maf( maf_file, patientWhitelist, geneToCases, patientToMutations, vc, vt, vs, ivc, ivt, ivs, verbose ):
     if verbose > 1: print '\tLoading MAF:', maf_file
-    genes, patients = set(), set()        
+    genes, patients = set(), set()
     with open(maf_file, 'r') as IN:
         seenHeader = False
         for i, l in enumerate(IN):
@@ -39,17 +39,17 @@ def process_maf( maf_file, patientWhitelist, geneToCases, patientToMutations, vc
                 var_class_index  = arr.index('variant_classification')  if 'variant_classification' in arr else None
                 var_type_index   = arr.index('variant_type')  if 'variant_type' in arr else None
                 val_status_index = arr.index('validation_status') if 'validation_status' in arr else None
-                
+
             # Process the mutation
-            else:
+            elif seenHeader:
                 # Record the patients and genes, even if we ignore their mutations
                 patient, gene = '-'.join(arr[patient_index].split('-')[:3]), arr[gene_index]
-                
+
                 if not patientWhitelist[patient]: continue
 
                 patients.add(patient)
                 genes.add(gene)
-                
+
                 # Ignore certain mutations. If we aren't given certain information, we
                 # will include the mutation by default
                 if var_class_index:
@@ -58,14 +58,14 @@ def process_maf( maf_file, patientWhitelist, geneToCases, patientToMutations, vc
                 else:
                     var_class = ''
                     vc_check = True
-                    
+
                 if var_type_index:
                     var_type = arr[var_type_index].lower()
                     vt_check = not (var_type in ivt)
                 else:
                     var_type = ''
                     vt_check = True
-                    
+
                 if val_status_index:
                     val_status = arr[val_status_index].lower()
                     vs_check = not (val_status in ivs)
@@ -80,7 +80,7 @@ def process_maf( maf_file, patientWhitelist, geneToCases, patientToMutations, vc
                     vc.add( var_class )
                     geneToCases[gene].add( patient )
                     patientToMutations[patient].add( gene )
-                
+
     return genes, patients
 
 def process_events_file( events_file, patientWhitelist, geneToCases, patientToMutations, verbose ):
@@ -101,7 +101,7 @@ def process_events_file( events_file, patientWhitelist, geneToCases, patientToMu
             patientToMutations[patient] |= mutations
             for event in mutations:
                 geneToCases[event].add( patient )
-                
+
     return events, patients
 
 def run( args ):
@@ -120,7 +120,7 @@ def run( args ):
     else:
         if args.verbose > 0: print '* No patient whitelist provided, including all patients...'
         patientWhitelist = defaultdict( lambda : True )
-                
+
     # Load the mutations from each MAF
     if args.verbose > 0: print '* Loading and combining {} datasets...'.format(len(args.cancer_types))
     geneToCases, patientToMutations = defaultdict( set ), defaultdict( set )
@@ -128,7 +128,7 @@ def run( args ):
     vc, vt, vs = set(), set(), set() # variant classes/types and validation statuses
     patientToType = dict()
     cancerToFiles = defaultdict(list)
-    
+
     for cancer_type, mutation_file_group in zip(args.cancer_types, args.mutation_file_groups):
         for mutation_file in mutation_file_group:
             cancerToFiles[cancer_type].append(os.path.abspath(mutation_file))
@@ -136,11 +136,11 @@ def run( args ):
                 per_type_genes, per_type_patients = process_maf( mutation_file, patientWhitelist, geneToCases, patientToMutations, vc, vt, vs, ivc, ivt, ivs, args.verbose)
             else:
                 per_type_genes, per_type_patients = process_events_file( mutation_file, patientWhitelist, geneToCases, patientToMutations, args.verbose )
-                
+
             patientToType.update( (p, cancer_type) for p in per_type_patients )
             patients |= per_type_patients
             genes    |= per_type_genes
-        
+
     patients     = sorted(patients)
     genes        = sorted(genes)
     num_patients = len(patients)
@@ -177,5 +177,5 @@ def run( args ):
                       patientToMutations=dict( (p, list(muts)) for p, muts in patientToMutations.items()),
                       num_genes=num_genes, num_patients=num_patients)
         json.dump( output, OUT )
-    
+
 if __name__ == '__main__': run( get_parser().parse_args( sys.argv[1:]) )

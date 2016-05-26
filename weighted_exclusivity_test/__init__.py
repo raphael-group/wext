@@ -5,6 +5,7 @@ from constants import *
 from benjamini_hochberg import *
 from io import *
 from enumerate_sets import *
+from mcmc import mcmc
 from exact import exact_test
 import cpoibin
 from saddlepoint import saddlepoint
