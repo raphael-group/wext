@@ -43,6 +43,7 @@ def permute_matrices(edge_list, max_swaps, max_tries, seeds, verbose,
 
         # Record the permutation
         observed[zip(*indices)] += 1.
+        geneToCases = dict( (g, list(cases)) for g, cases in geneToCases.iteritems() )
         permutations.append( dict(geneToCases=geneToCases, permutation_number=seed) )
 
     return observed/float(len(seeds)), permutations
@@ -136,6 +137,6 @@ def run( args ):
                 # Output in adjacency list format
                 with open(output_prefix.format(permutation['permutation_number']), 'w') as OUT:
                     permutation['params'] = params
-                    json.dump( params, OUT )
+                    json.dump( permutation, OUT )
 
 if __name__ == '__main__': run( get_parser().parse_args(sys.argv[1:]) )
