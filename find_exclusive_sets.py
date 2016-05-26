@@ -40,7 +40,7 @@ def get_parser():
 
     weighted_parser = subparser1.add_parser("Weighted")
     weighted_parser.add_argument('-m', '--method', choices=METHOD_NAMES, type=str, required=True)
-    weighted_parser.add_argument('-wf', '--weights_file', type=str, required=True)
+    weighted_parser.add_argument('-wf', '--weights_files', type=str, required=True, nargs='*')
 
     unweighted_parser = subparser1.add_parser("Unweighted")
     unweighted_parser.add_argument('-m', '--method', choices=METHOD_NAMES, type=str, required=True)
@@ -58,23 +58,56 @@ def get_permuted_files(permuted_matrix_directories, num_permutations):
 
     return zip(*permuted_directory_files)
 
-def load_weight_files(weights_files, m, n, typeToGenes, typeToGeneIndex, geneToIndex):
+# Load a list of weights files, merging them at the patient and gene level.
+# Note that if a (gene, patient) pair is present in more than one file, it will
+# be overwritten.
+def load_weight_files(weights_files, genes, patients, typeToGeneIndex, typeToPatientIndex, masterGeneToIndex, masterPatientToIndex):
     # Master matrix of all weights
-    P = np.zeros((m, n))
-    patient_index = 0
+    P = np.zeros((len(genes), len(patients)))
     for i, weights_file in enumerate(weights_files):
-        # Load the weights matrix for this cancer type and update the entires appropriately
-        type_P          = np.load(weights_file)
-        ty_num_patients = np.shape(type_P)[1]
-        ty_genes        = set(typeToGenes[i]) & genes
-        ty_gene_indices = [ typeToGeneIndex[i][g] for g in ty_genes ]
-        gene_indices    = [ geneToIndex[g] for g in ty_genes ]
-        P[gene_indices, patient_index:patient_index + ty_num_patients] = type_P[ ty_gene_indices ]
-        patient_index  += ty_num_patients
+        # Load the weights matrix for this cancer type and update the entries appropriately.
+        # Note that since genes/patients can be measured in multiple types, we need to map
+        # each patient to the "master" index.
+        type_P                 = np.load(weights_file)
 
-    # Set any zero entries to the minimum (pseudocount)
+        ty_genes               = set(typeToGeneIndex[i].keys()) & genes
+        ty_gene_indices        = [ typeToGeneIndex[i][g] for g in ty_genes ]
+        master_gene_indices    = [ masterGeneToIndex[g] for g in ty_genes ]
+        
+        ty_patients            = set(typeToPatientIndex[i].keys()) & patients
+        ty_patient_indices     = [ typeToPatientIndex[i][p] for p in ty_patients ]
+        master_patient_indices = [ masterPatientToIndex[p] for p in ty_patients ]
+
+        master_mesh            = np.ix_(master_gene_indices, master_patient_indices)
+        ty_mesh                = np.ix_(ty_gene_indices, ty_patient_indices)
+        P[ master_mesh ]       = type_P[ ty_mesh  ]
+
+    # Set any zero entries to the minimum (pseudocount). The only reason for zeros is if
+    #  a gene wasn't mutated at all in a particular dataset.
     P[P == 0] = np.min(P[P > 0])
-    return dict( (g, P[geneToIndex[g]]) for g in genes )
+    
+    return dict( (g, P[masterGeneToIndex[g]]) for g in genes )
+
+def load_mutation_files(mutation_files):
+    typeToGeneIndex, typeToPatientIndex = [], []
+    genes, patients, geneToCases = set(), set(), defaultdict(set)
+    for i, mutation_file in enumerate(mutation_files):
+        # Load ALL the data, we restrict by mutation frequency later
+        mutation_data = load_mutation_data( mutation_file, 0 )
+        _, type_genes, type_patients, typeGeneToCases, _, params, _ = mutation_data
+
+        # We take the union of all patients and genes
+        patients |= set(type_patients)
+        genes    |= set(type_genes)
+
+        # Record the mutations in each gene
+        for g, cases in typeGeneToCases.iteritems(): geneToCases[g] |= cases
+
+        # Record the genes, patients, and their indices for later
+        typeToGeneIndex.append(dict(zip(type_genes, range(len(type_genes)))))
+        typeToPatientIndex.append(dict(zip(type_patients, range(len(type_patients)))))
+
+    return genes, patients, geneToCases, typeToGeneIndex, typeToPatientIndex
 
 def run( args ):
     # Provide additional checks on arguments
@@ -87,34 +120,14 @@ def run( args ):
     # Load the mutation data
     if args.verbose > 0:
         print ('-' * 30), 'Input Mutation Data', ('-' * 29)
-
-    typeToGeneIndex = []
-    genes, patients, geneToCases, typeToGenes = set(), set(), defaultdict(set), []
-    for i, mutation_file in enumerate(args.mutation_files):
-        # Load ALL the data, we restrict by mutation frequency later
-        mutation_data = load_mutation_data( mutation_file, 0 )
-        _, type_genes, type_patients, typeGeneToCases, _, params, _ = mutation_data
-
-        # We take the union of all patients and genes
-        patients |= set(type_patients)
-        genes    |= set(type_genes)
-
-        # Record the mutations in each gene
-        for g, cases in typeGeneToCases.iteritems(): geneToCases[g] |= cases
-
-        # Record the index and genes for later
-        typeToGenes.append( type_genes )
-        typeToGeneIndex.append(dict(zip(type_genes, range(len(type_genes)))))
-
+    genes, patients, geneToCases, typeToGeneIndex, typeToPatientIndex = load_mutation_files( args.mutation_files )
     num_all_genes, num_patients = len(genes), len(patients)
 
     # Restrict to genes mutated in a minimum number of samples
     geneToCases = dict( (g, cases) for g, cases in geneToCases.iteritems() if g in genes and len(cases) >= args.min_frequency )
     genes     = set(geneToCases.keys())
     num_genes = len(genes)
-    geneToIndex  = dict(zip(sorted(genes), range(num_genes)))
-    gene_indices = [ geneToIndex[g] for g in genes ]
-
+    
     # Load patient annotations (if provided) and add per patient events
     if args.patient_annotation_file:
         annotationToPatients = load_patient_annotation_file(args.patient_annotation_file)
@@ -141,7 +154,10 @@ def run( args ):
     # Load the weights (if necessary)
     test = nameToTest[args.test]
     if test == WEIGHTED:
-        geneToP = load_weight_files(weights_files, num_genes, num_patients, typeToGenes, typeToGeneIndex, geneToIndex)
+        # Create master versions of the indices
+        masterGeneToIndex    = dict(zip(sorted(genes), range(num_genes)))
+        masterPatientToIndex = dict( zip(sorted(patients), range(num_patients)) )
+        geneToP = load_weight_files(args.weights_files, genes, patients, typeToGeneIndex, typeToPatientIndex, masterGeneToIndex, masterPatientToIndex)
     else:
         geneToP = None
 
