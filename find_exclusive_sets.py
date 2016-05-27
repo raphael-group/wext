@@ -36,7 +36,7 @@ def get_parser():
 
     permutational_parser = subparser1.add_parser("Permutational")
     permutational_parser.add_argument('-np', '--num_permutations', type=int, required=True)
-    permutational_parser.add_argument('-pf', '--permuted_matrix_files', type=str, nargs='*', required=True)
+    permutational_parser.add_argument('-pd', '--permuted_matrix_directories', type=str, nargs='*', required=True)
 
     weighted_parser = subparser1.add_parser("Weighted")
     weighted_parser.add_argument('-m', '--method', choices=METHOD_NAMES, type=str, required=True)
@@ -80,7 +80,11 @@ def load_weight_files(weights_files, genes, patients, typeToGeneIndex, typeToPat
 
         master_mesh            = np.ix_(master_gene_indices, master_patient_indices)
         ty_mesh                = np.ix_(ty_gene_indices, ty_patient_indices)
-        P[ master_mesh ]       = type_P[ ty_mesh  ]
+
+        if np.any( P[master_mesh] > 0 ):
+            raise ValueError("Different weights for same gene-patient pair")
+        else:
+            P[ master_mesh ] = type_P[ ty_mesh  ]
 
     # Set any zero entries to the minimum (pseudocount). The only reason for zeros is if
     #  a gene wasn't mutated at all in a particular dataset.
