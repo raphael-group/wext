@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Load required modules
-import multiprocessing as mp, json
+import sys, multiprocessing as mp, json
 from time import time
 from collections import defaultdict, Counter
 from math import ceil, isnan
@@ -155,7 +155,8 @@ def test_set_group( sets, geneToCases, num_patients, method, test, P=None, verbo
 
     return setToPval, setToTime, setToObs
 
-def test_sets( sets, geneToCases, num_patients, method, test, P=None, num_cores=1, verbose=0):
+def test_sets( sets, geneToCases, num_patients, method, test, P=None, num_cores=1, verbose=0,
+               report_invalids=False):
     # Set up the multiprocessing
     num_cores = num_cores if num_cores != -1 else mp.cpu_count()
     if num_cores != 1:
@@ -183,6 +184,16 @@ def test_sets( sets, geneToCases, num_patients, method, test, P=None, num_cores=
     # Make sure all P-values are numbers
     tested_sets = len(setToPval)
     invalid_sets = set( M for M, pval in setToPval.iteritems() if isnan(pval) or -PTOL > pval or pval > 1+PTOL )
+
+    # Report invalid sets
+    if verbose > 0 and report_invalids:
+        sys.stderr.write('- Found {} sets with invalid P-values\n'.format(len(invalid_sets)))
+        invalid_rows = []
+        for M in invalid_sets:
+            X, T, Z, tbl = setToObs[M]
+            invalid_rows.append([ ','.join(sorted(M)), T, Z, tbl, setToPval[M] ])
+        sys.stderr.write( '\t' + '\n\t '.join([ '\t'.join(map(str, row)) for row in invalid_rows ]) + '\n' )
+    
     setToPval = dict( (M, pval) for M, pval in setToPval.iteritems() if not M in invalid_sets )
     setToTime = dict( (M, runtime) for M, runtime in setToTime.iteritems() if not M in invalid_sets )
     setToObs = dict( (M, obs) for M, obs in setToObs.iteritems() if not M in invalid_sets )

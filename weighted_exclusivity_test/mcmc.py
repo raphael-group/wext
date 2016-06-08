@@ -71,7 +71,7 @@ def mcmc(ks, geneToCases, num_patients, method, test, geneToP, seed, annotations
         while itera < niters:
             # Simple progress bar
             if verbose > 0 and (itera % progress_step == 0):
-                sys.stdout.write("\r[%-72s] %d%%" % ('='*np.ceil(itera / progress_step) + '>', np.ceil(100.*itera / niters)))
+                sys.stdout.write("\r[%-72s] %d%%" % ('='*int(np.ceil(itera / progress_step)) + '>', int(np.ceil(100.*itera / niters))))
                 sys.stdout.flush()
 
             # Sample the next gene to swap in/around the set

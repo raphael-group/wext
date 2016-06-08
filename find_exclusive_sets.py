@@ -20,6 +20,7 @@ def get_parser():
     parser.add_argument('-f', '--min_frequency', type=int, default=1, required=False)
     parser.add_argument('-c', '--num_cores', type=int, required=False, default=1)
     parser.add_argument('-v', '--verbose', type=int, required=False, default=1, choices=range(5))
+    parser.add_argument('-r', '--report_invalids', action='store_true', default=False, required=False)
     parser.add_argument('--json_format', action='store_true', default=False, required=False)
 
     # Search strategy
@@ -189,7 +190,8 @@ def run( args ):
             else:
                 # Run the test
                 method = nameToMethod[args.method]
-                setToPval, setToRuntime, setToFDR, setToObs = test_sets(sets, geneToCases, num_patients, method, test, geneToP, args.num_cores, args.verbose)
+                setToPval, setToRuntime, setToFDR, setToObs = test_sets(sets, geneToCases, num_patients, method, test, geneToP, args.num_cores,
+                                                                        verbose=args.verbose, report_invalids=args.report_invalids)
             output_enumeration_table( args, k, setToPval, setToRuntime, setToFDR, setToObs )
 
     # MCMC
