@@ -35,15 +35,15 @@ def get_parser():
     # Subparser: statistical test
     subparser1 = parser.add_subparsers(dest='test', help='Type of test')
 
-    permutational_parser = subparser1.add_parser("Permutational")
+    permutational_parser = subparser1.add_parser("RCE")
     permutational_parser.add_argument('-np', '--num_permutations', type=int, required=True)
     permutational_parser.add_argument('-pd', '--permuted_matrix_directories', type=str, nargs='*', required=True)
 
-    weighted_parser = subparser1.add_parser("Weighted")
+    weighted_parser = subparser1.add_parser("WRE")
     weighted_parser.add_argument('-m', '--method', choices=METHOD_NAMES, type=str, required=True)
     weighted_parser.add_argument('-wf', '--weights_files', type=str, required=True, nargs='*')
 
-    unweighted_parser = subparser1.add_parser("Unweighted")
+    unweighted_parser = subparser1.add_parser("RE")
     unweighted_parser.add_argument('-m', '--method', choices=METHOD_NAMES, type=str, required=True)
 
     return parser
@@ -52,8 +52,8 @@ def get_permuted_files(permuted_matrix_directories, num_permutations):
     # Group and restrict the list of files we're testing
     permuted_directory_files = []
     for permuted_matrix_dir in permuted_matrix_directories:
-        files = os.listdir(permuted_matrix_dir)
-        permuted_matrices = [ '{}/{}'.format(permuted_matrix_dir, f) for f in files ]
+        files = sorted(os.listdir(permuted_matrix_dir))
+        permuted_matrices = [ '{}/{}'.format(permuted_matrix_dir, f) for f in files if f.lower().endswith('.json') ]
         permuted_directory_files.append( permuted_matrices[:num_permutations] )
     assert( len(files) == num_permutations for files in permuted_directory_files )
 
@@ -158,7 +158,7 @@ def run( args ):
 
     # Load the weights (if necessary)
     test = nameToTest[args.test]
-    if test == WEIGHTED:
+    if test == WRE:
         # Create master versions of the indices
         masterGeneToIndex    = dict(zip(sorted(genes), range(num_genes)))
         masterPatientToIndex = dict( zip(sorted(patients), range(num_patients)) )
@@ -167,13 +167,10 @@ def run( args ):
         geneToP = None
 
     # Find the permuted matrices (if necessary)
-    if test == PERMUTATIONAL:
+    if test == RCE:
         permuted_files = get_permuted_files(args.permuted_matrix_directories, args.num_permutations)
         if args.verbose > 0:
             print '* Using {} permuted matrix files'.format(len(permuted_files))
-
-    # Search for exclusive sets
-    method = nameToMethod[args.method]
 
     #Enumeration
     if args.search_strategy == 'Enumerate':
@@ -184,7 +181,7 @@ def run( args ):
             num_sets = len(sets)
 
             if args.verbose  > 0: print 'k={}: {} sets...'.format(k, num_sets)
-            if test == PERMUTATIONAL:
+            if test == RCE:
                 # Run the permutational
                 setToPval, setToRuntime, setToFDR, setToObs = permutational_test( sets, geneToCases, num_patients, permuted_files, args.num_cores, args.verbose )
             else:

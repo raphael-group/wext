@@ -47,7 +47,7 @@ def create_tbl_header( k ):
 
 # Output a run to file as a table or JSON file
 def output_enumeration_table(args, k, setToPval, setToRuntime, setToFDR, setToObs ):
-    is_permutational = nameToTest[args.test] == PERMUTATIONAL
+    is_permutational = nameToTest[args.test] == RCE
     extension = 'json' if args.json_format else 'tsv'
     with open('{}-k{}.{}'.format(args.output_prefix, k, extension), 'w') as OUT:
         # Tab-separated

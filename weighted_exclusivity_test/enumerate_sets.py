@@ -142,9 +142,9 @@ def test_set_group( sets, geneToCases, num_patients, method, test, P=None, verbo
 
         # Compute the saddlepoint approximations
         start = time()
-        if test == WEIGHTED:
+        if test == WRE:
             setToPval[M] = weighted_test( T, X, [ P[g] for g in sorted_M ], method )
-        elif test == UNWEIGHTED:
+        elif test == RE:
             setToPval[M] = unweighted_test( T, X, tbl, method )
         else:
             raise NotImplementedError("Test {} not implemented".format(testToName[test]))
