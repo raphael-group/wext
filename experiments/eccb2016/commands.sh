@@ -10,9 +10,9 @@ THCA_MIN_FREQ=5
 UCEC_MIN_FREQ=30
 LENGTH_THRESHOLD=600
 FDR_CUTOFF=0.001
-EXTRA_PERMUTATIONS=1000000
-PAIRS_PERMUTATIONS=10000
-WEIGHTS_PERMUTATIONS=1000
+TRIPLES_PERMUTATIONS=1000000 # k=3 comparison on COADREAD for RCE
+PAIRS_PERMUTATIONS=10000    # k=2 comparisons for RCE
+WEIGHTS_PERMUTATIONS=1000   # for WRE
 
 # Parallel processing
 NUM_CORES=25
@@ -92,14 +92,14 @@ python $SCRIPTS_DIR/remove_genes_with_no_length.py -lf $GENE_LENGTH_FILE \
 ################################################################################
 WEIGHTS_SUFFIX=`printf %.E $WEIGHTS_PERMUTATIONS`
 PAIRS_PERMUTATION_SUFFIX=`printf %.E $PAIRS_PERMUTATIONS`
-EXTRA_PERMUTATION_SUFFIX=`printf %.E $EXTRA_PERMUTATIONS`
+TRIPLES_PERMUTATION_SUFFIX=`printf %.E $TRIPLES_PERMUTATIONS`
 
 # Set up directories
 COADREAD_PAIRS_PERMUTATIONS=$PERMUTED_DIR/coadread-$PAIRS_PERMUTATION_SUFFIX
-COADREAD_EXTRA_PERMUTATIONS=$PERMUTED_DIR/coadread-$EXTRA_PERMUTATION_SUFFIX
+COADREAD_TRIPLES_PERMUTATIONS=$PERMUTED_DIR/coadread-$TRIPLES_PERMUTATION_SUFFIX
 THCA_PAIRS_PERMUTATIONS=$PERMUTED_DIR/thca-$PAIRS_PERMUTATION_SUFFIX
 UCEC_PAIRS_PERMUTATIONS=$PERMUTED_DIR/ucec-$PAIRS_PERMUTATION_SUFFIX
-mkdir -p $COADREAD_PAIRS_PERMUTATIONS $THCA_PAIRS_PERMUTATIONS $UCEC_PAIRS_PERMUTATIONS $COADREAD_EXTRA_PERMUTATIONS
+mkdir -p $COADREAD_PAIRS_PERMUTATIONS $THCA_PAIRS_PERMUTATIONS $UCEC_PAIRS_PERMUTATIONS $COADREAD_TRIPLES_PERMUTATIONS
 
 # Colorectal
 COADREAD_WEIGHTS=$WEIGHTS_DIR/coadread-np${WEIGHTS_SUFFIX}.npy
@@ -113,16 +113,16 @@ if [ "$GRID_ENGINE" = true ]; then
          $SCRIPTS_DIR/permute_single_matrix.py -mf $COADREAD_MUTATIONS \
          -o $COADREAD_PAIRS_PERMUTATIONS/coadread-permuted -wd $WEXT_DIR
     
-    qsub -t 1-$EXTRA_PERMUTATIONS -tc $NUM_GRID_NODES -sync y -V -cwd -N per \
-         -o $COADREAD_EXTRA_PERMUTATIONS/command.out \
-         -e $COADREAD_EXTRA_PERMUTATIONS/command.err \
+    qsub -t 1-$TRIPLES_PERMUTATIONS -tc $NUM_GRID_NODES -sync y -V -cwd -N per \
+         -o $COADREAD_TRIPLES_PERMUTATIONS/command.out \
+         -e $COADREAD_TRIPLES_PERMUTATIONS/command.err \
          $SCRIPTS_DIR/permute_single_matrix.py -mf $COADREAD_MUTATIONS \
-         -o $COADREAD_EXTRA_PERMUTATIONS/coadread-permuted -wd $WEXT_DIR
+         -o $COADREAD_TRIPLES_PERMUTATIONS/coadread-permuted -wd $WEXT_DIR
 else
     python compute_mutation_probabilities.py -mf $COADREAD_MUTATIONS -v 1 \
            -np $PAIRS_PERMUTATIONS -nc $NUM_CORES -pd $COADREAD_PAIRS_PERMUTATIONS
     python compute_mutation_probabilities.py -mf $COADREAD_MUTATIONS -v 1 \
-           -np $EXTRA_PERMUTATIONS -nc $NUM_CORES -pd $COADREAD_EXTRA_PERMUTATIONS
+           -np $TRIPLES_PERMUTATIONS -nc $NUM_CORES -pd $COADREAD_TRIPLES_PERMUTATIONS
 fi
 
 # Thyroid
@@ -230,17 +230,17 @@ python find_exclusive_sets.py -s Enumerate -mf $UCEC_MUTATIONS -c $NUM_CORES \
 ################################################################################
 
 # Colorectal
-COADREAD_RCE_PERMUTATIONS_TRIPLES=$TRIPLES_DIR/coadread-RCE-permutations-np${EXTRA_PERMUTATION_SUFFIX}
+COADREAD_RCE_PERMUTATIONS_TRIPLES=$TRIPLES_DIR/coadread-RCE-permutations-np${TRIPLES_PERMUTATION_SUFFIX}
 if [ "$GRID_ENGINE" = true ]; then
-    COADREAD_RCE_PERMUTATIONS_GRID=$OUTPUT_DIR/grid/coadread-np${EXTRA_PERMUTATION_SUFFIX}
+    COADREAD_RCE_PERMUTATIONS_GRID=$OUTPUT_DIR/grid/coadread-np${TRIPLES_PERMUTATION_SUFFIX}
     mkdir -p $COADREAD_RCE_PERMUTATIONS_GRID
     
-    qsub -t 1-$(($EXTRA_PERMUTATIONS / $COADREAD_GRID_BATCH_SIZE)) \
+    qsub -t 1-$(($TRIPLES_PERMUTATIONS / $COADREAD_GRID_BATCH_SIZE)) \
          -tc $NUM_GRID_NODES -sync y -V -cwd -N per \
          -o $COADREAD_RCE_PERMUTATIONS_GRID/command.out \
          -e $COADREAD_RCE_PERMUTATIONS_GRID/command.err \
          $SCRIPTS_DIR/permutation_test_helper.py -m $COADREAD_MUTATIONS -k 3 \
-         -i $COADREAD_EXTRA_PERMUTATIONS/ -b $COADREAD_GRID_BATCH_SIZE -np $EXTRA_PERMUTATIONS \
+         -i $COADREAD_TRIPLES_PERMUTATIONS/ -b $COADREAD_GRID_BATCH_SIZE -np $TRIPLES_PERMUTATIONS \
          -f $COADREAD_MIN_FREQ -o $COADREAD_RCE_PERMUTATIONS_GRID/coadread-permutation-test \
          -w $WEXT_DIR
 
@@ -251,7 +251,7 @@ if [ "$GRID_ENGINE" = true ]; then
 else    
     python find_exclusive_sets.py -s Enumerate -mf $COADREAD_MUTATIONS -k 3 -v 4 \
            -c $NUM_CORES -f $COADREAD_MIN_FREQ -o $COADREAD_RCE_PERMUTATIONS_TRIPLES \
-           --json_format RCE -pd $COADREAD_EXTRA_PERMUTATIONS/ -np $EXTRA_PERMUTATIONS
+           --json_format RCE -pd $COADREAD_TRIPLES_PERMUTATIONS/ -np $TRIPLES_PERMUTATIONS
 fi
 
 COADREAD_RE_EXACT_TRIPLES=$TRIPLES_DIR/coadread-RE-exact
@@ -344,7 +344,7 @@ python $SCRIPTS_DIR/pairs_summary.py -c THCA THCA THCA THCA COADREAD \
 
 # FIGURE 3: Unweighted vs. Permutational (N=10^6) and Weighted (N=10^3) vs.
 # Permutational
-python $SCRIPTS_DIR/triple_pval_scatter.py -np $EXTRA_PERMUTATIONS \
+python $SCRIPTS_DIR/triple_pval_scatter.py -np $TRIPLES_PERMUTATIONS \
        -o   $FIGURES_DIR/Figure3.pdf \
        -uwf ${COADREAD_RE_EXACT_TRIPLES}-k3.json \
        -wf  ${COADREAD_WRE_SADDLEPOINT_TRIPLES}-k3.json \
