@@ -9,8 +9,10 @@ from saddlepoint import saddlepoint
 from comet_exact_test import comet_exact_test
 import warnings
 
-# Perform the weighted exclusivity test using the given method.
-def weighted_test(t, x, p, method=EXACT, verbose=0):
+# Perform the weighted-row exclusivity test (WR-test) using the given method.
+# Note that EXACT refers to the WR-exclusivity recursive formula, and computes
+# the p-value _exactly_.
+def wre_test(t, x, p, method=EXACT, verbose=0):
     # Check we're using an appropriate method
     assert( method in METHODS )
     # Check for equal numbers of genes.
@@ -39,8 +41,10 @@ def weighted_test(t, x, p, method=EXACT, verbose=0):
 
     return p_value
 
-# Perform the unweighted test
-def unweighted_test(t, x, tbl, method=EXACT, verbose=0):
+# Perform the row-exclusivity test (RE-test) using the given method.
+# Note that EXACT refers to the CoMEt tail enumeration scheme, and computes
+# the p-value _exactly_.
+def re_test(t, x, tbl, method=EXACT, verbose=0):
     N = sum(tbl)
     if method == SADDLEPOINT:
         p = [ [ float(x_i)/N ] * N for x_i in x ]

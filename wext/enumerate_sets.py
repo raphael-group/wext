@@ -7,7 +7,7 @@ from collections import defaultdict, Counter
 from math import ceil, isnan
 
 # Load local modules
-from exclusivity_tests import weighted_test, unweighted_test
+from exclusivity_tests import wre_test, re_test
 from constants import *
 from benjamini_hochberg import benjamini_hochberg_correction
 
@@ -43,7 +43,7 @@ def permutational_dist( sets, permuted_files ):
 
     return setToDist, setToTime
 
-def permutational_test(sets, geneToCases, num_patients, permuted_files, num_cores=1, verbose=0):
+def rce_permutation_test(sets, geneToCases, num_patients, permuted_files, num_cores=1, verbose=0):
     # Set up the multi-core process
     num_cores = num_cores if num_cores != -1 else mp.cpu_count()
     if num_cores != 1:
@@ -143,9 +143,9 @@ def test_set_group( sets, geneToCases, num_patients, method, test, P=None, verbo
         # Compute the saddlepoint approximations
         start = time()
         if test == WRE:
-            setToPval[M] = weighted_test( T, X, [ P[g] for g in sorted_M ], method )
+            setToPval[M] = wre_test( T, X, [ P[g] for g in sorted_M ], method )
         elif test == RE:
-            setToPval[M] = unweighted_test( T, X, tbl, method )
+            setToPval[M] = re_test( T, X, tbl, method )
         else:
             raise NotImplementedError("Test {} not implemented".format(testToName[test]))
 
