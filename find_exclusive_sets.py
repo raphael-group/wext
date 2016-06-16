@@ -117,7 +117,7 @@ def run( args ):
     # Provide additional checks on arguments
     if args.test == 'RCE':
         assert( len(args.mutation_files) == len(args.permuted_matrix_directories ) )
-        assert( args.strategy != "MCMC" ) # MCMC is not implemented for RCE
+        assert( args.search_strategy != "MCMC" ) # MCMC is not implemented for RCE
     elif args.test == 'WRE':
         assert( len(args.mutation_files) == len(args.weights_files) )
 
