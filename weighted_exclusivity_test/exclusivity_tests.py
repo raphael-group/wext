@@ -25,7 +25,7 @@ def weighted_test(t, x, p, method=EXACT, verbose=0):
     assert(t<=sum(x))
     #Check that we've implemented the given set size with the exact test
     if method == EXACT:
-        assert( len(x) in WRE_SADDLEPOINT_SET_SIZES_IMPLEMENTED )
+        assert( len(x) in WRE_EXACT_SET_SIZES_IMPLEMENTED )
 
     p = [ list(p_g) for p_g in p ]
 

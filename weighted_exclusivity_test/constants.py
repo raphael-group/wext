@@ -4,7 +4,7 @@
 PTOL = 10**-3
 
 # Set sizes implemented
-WRE_SADDLEPOINT_SET_SIZES_IMPLEMENTED = set([2, 3])
+WRE_EXACT_SET_SIZES_IMPLEMENTED = set([2, 3])
 
 # Different methods for computing the P-value
 EXACT        = 1

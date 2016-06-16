@@ -49,7 +49,7 @@ for val, indices in [("All", []), (0, 1./args.num_permutations), (1./args.num_pe
     print '-' * 80
     print 'CORRELATIONS ({})'.format(val)
     print aligned_plaintext_table('\n'.join([ '\t'.join(map(str, row)) for row in tbl ]) )
-sys.exit()
+
 permutational_pvals_no_zeros = [ p for p in permutational_pvals_with_zeros if p > 0 ]
 for method in ["Fisher's exact test", "Weighted (exact test)", "Weighted (saddlepoint)"]:
     pvals = list(df.loc[df['Method'] == method]['P-value'])
