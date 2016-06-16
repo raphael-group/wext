@@ -15,10 +15,9 @@ args = parser.parse_args( sys.argv[1:] )
 
 # Load WExT
 sys.path.append( args.wext_directory )
-from weighted_exclusivity_test import *
+from wext import *
 
 # Load and merge the JSON files
-
 def load_json_files(( json_files )):
     setToCount       = defaultdict( int )
     setToRuntime     = defaultdict( float )

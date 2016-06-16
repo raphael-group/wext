@@ -10,7 +10,7 @@ plt.style.use('ggplot')
 
 # Load the weighted exclusivity test
 sys.path.append(os.getcwd())
-from weighted_exclusivity_test import *
+from wext import *
 from helper import add_y_equals_x
 
 # Constants

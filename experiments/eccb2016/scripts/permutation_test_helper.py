@@ -22,7 +22,7 @@ args = parser.parse_args( sys.argv[1:] )
 # Load weighted exclusivity test
 sys.path.append(args.wext_directory)
 from find_exclusive_sets import get_permuted_files
-from weighted_exclusivity_test import permutational_test, load_mutation_data, output_enumeration_table
+from wext import rce_permutation_test, load_mutation_data, output_enumeration_table
 
 # Load the mutation data
 if args.verbose > 0: print '* Loading mutation data..'
@@ -39,7 +39,7 @@ start_index = (args.job_id-1) * args.batch_size
 permuted_files = get_permuted_files([args.input_directory], args.num_permutations)[start_index:start_index + args.batch_size]
 if args.verbose > 0: print '\t- Testing {} files'.format(len(permuted_files))
     
-setToPval, setToRuntime, setToFDR, setToObs = permutational_test( sets, geneToCases, num_patients, permuted_files, 1, 0 )
+setToPval, setToRuntime, setToFDR, setToObs = rce_permutation_test( sets, geneToCases, num_patients, permuted_files, 1, 0 )
 
 # Output to file
 args.output_prefix += '-%s' % job_id

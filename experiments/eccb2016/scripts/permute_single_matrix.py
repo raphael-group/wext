@@ -20,7 +20,7 @@ def get_parser():
 def run( args ):
     # Load WExT
     sys.path.append(args.wext_dir)
-    from weighted_exclusivity_test import load_mutation_data, bipartite_edge_swap
+    from wext import load_mutation_data, bipartite_edge_swap
     from compute_mutation_probabilities import permute_matrices
         
     # Load edge list.
