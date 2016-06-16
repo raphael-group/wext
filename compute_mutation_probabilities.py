@@ -7,7 +7,7 @@ from collections import defaultdict
 # Load the weighted exclusivity test
 this_dir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(this_dir)
-from weighted_exclusivity_test import *
+from wext import *
 
 # Argument parser
 def get_parser():

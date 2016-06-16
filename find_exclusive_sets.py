@@ -6,10 +6,9 @@ from itertools import combinations
 from collections import defaultdict
 from time import time
 
-# Load the weighted exclusivity test, ensuring that
-# it is in the path (unless this script was moved)
+# Load WExT, ensuring that it is in the path (unless this script was moved)
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
-from weighted_exclusivity_test import *
+from wext import *
 
 # Argument parser
 def get_parser():
@@ -35,16 +34,16 @@ def get_parser():
     # Subparser: statistical test
     subparser1 = parser.add_subparsers(dest='test', help='Type of test')
 
-    permutational_parser = subparser1.add_parser("Permutational")
-    permutational_parser.add_argument('-np', '--num_permutations', type=int, required=True)
-    permutational_parser.add_argument('-pd', '--permuted_matrix_directories', type=str, nargs='*', required=True)
+    RCE_parser = subparser1.add_parser("RCE")
+    RCE_parser.add_argument('-np', '--num_permutations', type=int, required=True)
+    RCE_parser.add_argument('-pd', '--permuted_matrix_directories', type=str, nargs='*', required=True)
 
-    weighted_parser = subparser1.add_parser("Weighted")
-    weighted_parser.add_argument('-m', '--method', choices=METHOD_NAMES, type=str, required=True)
-    weighted_parser.add_argument('-wf', '--weights_files', type=str, required=True, nargs='*')
+    WRE_parser = subparser1.add_parser("WRE")
+    WRE_parser.add_argument('-m', '--method', choices=METHOD_NAMES, type=str, required=True)
+    WRE_parser.add_argument('-wf', '--weights_files', type=str, required=True, nargs='*')
 
-    unweighted_parser = subparser1.add_parser("Unweighted")
-    unweighted_parser.add_argument('-m', '--method', choices=METHOD_NAMES, type=str, required=True)
+    RE_parser = subparser1.add_parser("RE")
+    RE_parser.add_argument('-m', '--method', choices=METHOD_NAMES, type=str, required=True)
 
     return parser
 
@@ -52,8 +51,8 @@ def get_permuted_files(permuted_matrix_directories, num_permutations):
     # Group and restrict the list of files we're testing
     permuted_directory_files = []
     for permuted_matrix_dir in permuted_matrix_directories:
-        files = os.listdir(permuted_matrix_dir)
-        permuted_matrices = [ '{}/{}'.format(permuted_matrix_dir, f) for f in files ]
+        files = sorted(os.listdir(permuted_matrix_dir))
+        permuted_matrices = [ '{}/{}'.format(permuted_matrix_dir, f) for f in files if f.lower().endswith('.json') ]
         permuted_directory_files.append( permuted_matrices[:num_permutations] )
     assert( len(files) == num_permutations for files in permuted_directory_files )
 
@@ -116,10 +115,10 @@ def load_mutation_files(mutation_files):
 
 def run( args ):
     # Provide additional checks on arguments
-    if args.test == 'Permutational':
+    if args.test == 'RCE':
         assert( len(args.mutation_files) == len(args.permuted_matrix_directories ) )
-        assert( args.strategy != "MCMC" ) # MCMC is not implemented for permutational
-    elif args.test == 'Weighted':
+        assert( args.search_strategy != "MCMC" ) # MCMC is not implemented for RCE
+    elif args.test == 'WRE':
         assert( len(args.mutation_files) == len(args.weights_files) )
 
     # Load the mutation data
@@ -158,7 +157,7 @@ def run( args ):
 
     # Load the weights (if necessary)
     test = nameToTest[args.test]
-    if test == WEIGHTED:
+    if test == WRE:
         # Create master versions of the indices
         masterGeneToIndex    = dict(zip(sorted(genes), range(num_genes)))
         masterPatientToIndex = dict( zip(sorted(patients), range(num_patients)) )
@@ -167,13 +166,10 @@ def run( args ):
         geneToP = None
 
     # Find the permuted matrices (if necessary)
-    if test == PERMUTATIONAL:
+    if test == RCE:
         permuted_files = get_permuted_files(args.permuted_matrix_directories, args.num_permutations)
         if args.verbose > 0:
             print '* Using {} permuted matrix files'.format(len(permuted_files))
-
-    # Search for exclusive sets
-    method = nameToMethod[args.method]
 
     #Enumeration
     if args.search_strategy == 'Enumerate':
@@ -184,9 +180,9 @@ def run( args ):
             num_sets = len(sets)
 
             if args.verbose  > 0: print 'k={}: {} sets...'.format(k, num_sets)
-            if test == PERMUTATIONAL:
+            if test == RCE:
                 # Run the permutational
-                setToPval, setToRuntime, setToFDR, setToObs = permutational_test( sets, geneToCases, num_patients, permuted_files, args.num_cores, args.verbose )
+                setToPval, setToRuntime, setToFDR, setToObs = rce_permutation_test( sets, geneToCases, num_patients, permuted_files, args.num_cores, args.verbose )
             else:
                 # Run the test
                 method = nameToMethod[args.method]

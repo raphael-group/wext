@@ -13,8 +13,7 @@ def get_parser():
     parser.add_argument('-pw', '--patient_whitelist', type=str, required=False)
     parser.add_argument('-hf', '--hypermutators_file', type=str, required=False, default=None)
     parser.add_argument('-ivc', '--ignored_variant_classes', type=str, required=False, nargs='*',
-                        default=["Silent", "Intron", "3'UTR", "5'UTR", "IGR", "lincRNA",
-                                 "RNA", "In_Frame_Del", "De_Novo_Start_Inframe", "In_Frame_Ins"])
+                        default=["Silent", "Intron", "3'UTR", "5'UTR", "IGR", "lincRNA", "RNA"])
     parser.add_argument('-ivt', '--ignored_variant_types', type=str, required=False, nargs='*',
                         default=['Germline'])
     parser.add_argument('-ivs', '--ignored_validation_statuses', type=str, required=False, nargs='*',

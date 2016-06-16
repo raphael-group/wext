@@ -7,18 +7,18 @@ from random import random, sample, choice, seed as random_seed
 
 from constants import *
 from enumerate_sets import observed_values
-from exclusivity_tests import unweighted_test, weighted_test
+from exclusivity_tests import re_test, wre_test
 
 def mcmc(ks, geneToCases, num_patients, method, test, geneToP, seed, annotations=set(), verbose=0, step_len=100, nchains=1, niters=1000, alpha=1):
     if verbose > 0: print '-' * 33, 'Running MCMC', '-' * 33
 
     # Set up a local version of the weight function
-    if test == WEIGHTED:
+    if test == WRE:
         def _test(M, X, T, Z, tbl):
-            return weighted_test(T, X, [ geneToP[g] for g in M ], method=method)
-    elif test == UNWEIGHTED:
+            return wre_test(T, X, [ geneToP[g] for g in M ], method=method)
+    elif test == RE:
         def _test(M, X, T, Z, tbl):
-            return unweighted_test(T, X, tbl, method=method)
+            return re_test(T, X, tbl, method=method)
     else:
         raise NotImplementedError('Test "{}" not implemented with MCMC'.format(testToName[test]))
 
