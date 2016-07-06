@@ -1,6 +1,6 @@
-# Weighted Exclusivity Test #
+# Weighted Exclusivity Test (WExT) #
 
-The weighted exclusivity test was developed by the [Raphael research group](http://compbio.cs.brown.edu/) at Brown University.
+The Weighted Exclusivity Test (WExT) was developed by the [Raphael research group](http://compbio.cs.brown.edu/) at Brown University.
 
 ### Requirements ###
 
@@ -26,7 +26,7 @@ See the wiki for additional instructions on [Setup and installation](https://git
 
 The C and Fortran extensions must be compiled before running the weighted exclusivity test:
 
-    cd weighted_exclusivity_test
+    cd wext
     python setup.py build
     f2py -c src/fortran/bipartite_edge_swap_module.f95 -m bipartite_edge_swap_module
 
@@ -35,16 +35,16 @@ The C and Fortran extensions must be compiled before running the weighted exclus
 #### Data preprocessing ####
 Before computing the weighted test, you need to process the input mutation data and generated permuted matrices.
 
-1. Process mutation data in MAF format with `process_mutations.py`. See [Process mutations](https://github.com/raphael-group/weighted-exclusivity-test/wiki/Process-mutations) on the wiki for details on usage and input.
-2. Generate permuted versions of the mutation data -- fixing the number of mutations per gene and per patient/sample -- and compute mutation probabilities with `compute_mutation_probabilities.py`. See [Compute mutation probabilities](https://github.com/raphael-group/weighted-exclusivity-test/wiki/Compute-mutation-probabilities) on the wiki for details on usage and input.
+1. Process mutation data in MAF format with `process_mutations.py`. See [Process mutations](https://github.com/raphael-group/wext/wiki/Process-mutations) on the wiki for details on usage and input.
+2. Generate permuted versions of the mutation data -- fixing the number of mutations per gene and per patient/sample -- and compute mutation probabilities with `compute_mutation_probabilities.py`. See [Compute mutation probabilities](https://github.com/raphael-group/wext/wiki/Compute-mutation-probabilities) on the wiki for details on usage and input.
 
-#### Computing the weighted test ####
+#### Searching for exclusive sets ####
 
-Given the mutation data, we compute the exclusivity of sets _M_ of genes with `compute_exclusivity.py`. Users can choose which test (unweighted, weighted, or permutational) and, for the unweighted and weighted tests, which method (exact or saddlepoint) is used to compute the _p_-values. See [Compute exclusivity](https://github.com/raphael-group/weighted-exclusivity-test/wiki/Compute-exclusivity) on the wiki for details on usage and input.
+Given the mutation data, we compute the exclusivity of sets _M_ of genes with `compute_exclusivity.py`. Users can choose which test (unweighted, weighted, or permutational) and, for the unweighted and weighted tests, which method (exact or saddlepoint) is used to compute the _p_-values. See [Compute exclusivity](https://github.com/raphael-group/wext/wiki/Compute-exclusivity) on the wiki for details on usage and input.
 
 ### Visualization ###
 
-We provide scripts to run an interactive web application to view the output of `compute_exclusivity.py`, including both the mutations and mutation probabilities for each set. See [`viz/README.md`](https://github.com/raphael-group/weighted-exclusivity-test/blob/master/viz/README.md) and [the wiki](https://github.com/raphael-group/weighted-exclusivity-test/wiki/VIsualization) for additional instructions and details.
+We provide scripts to run an interactive web application to view the output of `compute_exclusivity.py`, including both the mutations and mutation probabilities for each set. See [`viz/README.md`](https://github.com/raphael-group/wext/blob/master/viz/README.md) and [the wiki](https://github.com/raphael-group/wext/wiki/Visualization) for additional instructions and details.
 
 ### Testing ###
 [Add testing instructions here.]
@@ -55,4 +55,4 @@ Please visit the [Dendrix Google Group](https://groups.google.com/forum/#!forum/
 
 ### Reference ###
 
-Mark D.M. Leiserson, Matthew A. Reyna, and Benjamin J. Raphael. (2016) A Weighted Exact Test for Mutually Exclusive Mutations in Cancer. *In submission*.
+Mark D.M. Leiserson, Matthew A. Reyna, and Benjamin J. Raphael. (2016) A Weighted Exact Test for Mutually Exclusive Mutations in Cancer. _ECCB/Bioinformatics_ (to appear).
