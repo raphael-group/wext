@@ -7,7 +7,7 @@ from collections import defaultdict
 # Load the weighted exclusivity test code
 current_dir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.normpath(current_dir + '/../'))
-from weighted_exclusivity_test import *
+from wext import *
 
 # Argument parser
 def get_parser():
@@ -31,8 +31,8 @@ def run( args ):
             obj = json.load(IN)
             params = obj['params']
             min_frequency = params['min_frequency']
-            is_permutational = nameToTest[params['test']] == PERMUTATIONAL
-            method_paren = '' if is_permutational else ' ({})'.format(params['method'])
+            is_rce = nameToTest[params['test']] == RCE
+            method_paren = '' if is_rce else ' ({})'.format(params['method'])
             run_name = '{}{}'.format(params['test'], method_paren)
             methods.add( run_name )
             setToPval[run_name].update( obj['setToPval'].items() )
@@ -57,7 +57,7 @@ def run( args ):
     if args.num_sets:
         new_sets = set()
         for run_name in methods:
-            new_sets |= set(sorted( setToPval[run_name].keys(), key=lambda M: setToPval[M] )[:args.num_sets])
+            new_sets |= set(sorted( setToPval[run_name].keys(), key=lambda M: setToPval[run_name][M] )[:args.num_sets])
 
         sets = new_sets
         setToPval       = dict( (run_name, dict( (M, pval) for M, pval in setToPval[run_name].iteritems() if M in new_sets)) for run_name in methods )
