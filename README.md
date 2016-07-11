@@ -55,4 +55,4 @@ Please visit the [Dendrix Google Group](https://groups.google.com/forum/#!forum/
 
 ### Reference ###
 
-Mark D.M. Leiserson, Matthew A. Reyna, and Benjamin J. Raphael. (2016) A Weighted Exact Test for Mutually Exclusive Mutations in Cancer. _ECCB/Bioinformatics_ (to appear).
+Mark D.M. Leiserson, Matthew A. Reyna, and Benjamin J. Raphael. (2016) A Weighted Exact Test for Mutually Exclusive Mutations in Cancer. _ECCB/Bioinformatics_ (to appear). [arXiv preprint](http://arxiv.org/abs/1607.02447)
