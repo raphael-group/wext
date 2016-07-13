@@ -12,7 +12,37 @@ from constants import *
 from benjamini_hochberg import benjamini_hochberg_correction
 
 ################################################################################
-# Permutational test
+# ENUMERATE AND TEST SUBNETWORKS
+################################################################################
+def enumerate_subgraphs(G, k):
+    # Recursive subgraph generator, yielding when the subgraph is of
+    # given size k
+    def extend_subgraph(V_subgraph, V_ext, v):
+        if len(V_subgraph) == k:
+            yield V_subgraph
+        else:
+            while len(V_ext) > 0:
+                w = V_ext.pop()
+                N_V_subgraph = set()
+                for x in V_subgraph: N_V_subgraph |= set(G.neighbors(x))
+                N_excl = set()
+                for x in G.neighbors(w):
+                    if x > v: N_excl.add(x)
+                N_excl = N_excl - N_V_subgraph
+                V_ext_prime = V_ext | N_excl
+                for subgraph in extend_subgraph(V_subgraph | {w}, V_ext_prime, v):
+                    yield subgraph
+
+    # ESU procedure from thesis Wernicke
+    for v in G.nodes():
+        V_ext = set()
+        for w in G.neighbors(v):
+            if w > v: V_ext.add(w)
+        for subgraph in extend_subgraph({v}, V_ext, v):
+            yield frozenset(subgraph)
+            
+################################################################################
+# ROW-COLUMN EXCLUSIVITY PERMUTATION TEST
 ################################################################################
 # Compute the mutual exclusivity T for the given gene set
 def T(M, geneToCases):
@@ -199,7 +229,7 @@ def test_sets( sets, geneToCases, num_patients, method, test, P=None, num_cores=
     setToObs = dict( (M, obs) for M, obs in setToObs.iteritems() if not M in invalid_sets )
 
     if verbose > 0:
-        print '- Output {} sets'.format(len(setToPval))
+        print '\tOutput {} sets'.format(len(setToPval))
         print '\tRemoved {} sets with NaN or invalid P-values'.format(len(invalid_sets))
         print '\tIgnored {} sets with Z >= T or a gene with no exclusive mutations'.format(len(sets)-tested_sets)
 

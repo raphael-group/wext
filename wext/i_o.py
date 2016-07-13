@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Load required modules
-import sys, os, json, numpy as np
+import sys, os, json, numpy as np, networkx as nx
 from collections import defaultdict
 from constants import *
 
@@ -21,6 +21,22 @@ def load_mutation_data( mutation_file, min_freq=1 ):
 
     return genes, all_genes, patients, geneToCases, patientToMutations, params, hypermutators
 
+def load_network(graph_index_file, graph_edge_file):
+    # Load gene index file
+    with open(graph_index_file, 'r') as IN:
+        indexToGene = dict( l.rstrip('\n').split()[:2] for l in IN if not l.startswith('#') )
+
+    # Load edge file
+    with open(graph_edge_file, 'r') as IN:
+        arrs  = [ l.rstrip('\n').split()[:2] for l in IN if not l.startswith('#') ]
+        edges = [ (indexToGene[arr[0]], indexToGene[arr[1]]) for arr in arrs ]
+        
+    G = nx.Graph()
+    G.add_edges_from(edges)
+    G = G.subgraph([ n for n in G.nodes() if G.degree(n) > 1 ]) # restrict to 2-core
+    G.remove_edges_from([ (u,v) for u, v in G.edges() if u == v ]) # remove self-loops
+    return G
+    
 # Load a patient annotation file, optionally restricting to the patients
 # in the provided collection
 def load_patient_annotation_file(patient_annotation_file):

@@ -23,13 +23,16 @@ def get_parser():
     parser.add_argument('--json_format', action='store_true', default=False, required=False)
 
     # Search strategy
-    parser.add_argument('-s', '--search_strategy', type=str, choices=['Enumerate', 'MCMC'], default='MCMC', required=False)
+    parser.add_argument('-s', '--search_strategy', type=str, choices=['Enumerate', 'MCMC', 'Network', 'File'], required=True)
     parser.add_argument('-ks', '--gene_set_sizes', nargs="*", type=int, required=True)
     parser.add_argument('-N', '--num_iterations', type=int, default=pow(10, 3))
     parser.add_argument('-nc', '--num_chains', type=int, default=1)
     parser.add_argument('-sl', '--step_length', type=int, default=100)
     parser.add_argument('-a', '--alpha', type=float, default=2., required=False, help='CoMEt parameter alpha.')
     parser.add_argument('--mcmc_seed', type=int, default=int(time()), required=False)
+    parser.add_argument('-gif', '--graph_index_file', type=str, required=False)
+    parser.add_argument('-gef', '--graph_edge_file', type=str, required=False)
+    parser.add_argument('-gsf', '--gene_set_file', type=str, required=False)
 
     # Subparser: statistical test
     subparser1 = parser.add_subparsers(dest='test', help='Type of test')
@@ -154,6 +157,7 @@ def run( args ):
         print '- Genes mutated in >={} patients: {}'.format(args.min_frequency, num_genes)
         if args.patient_annotation_file:
             print '- Patient annotations:', len(annotations)
+        print
 
     # Load the weights (if necessary)
     test = nameToTest[args.test]
@@ -172,9 +176,10 @@ def run( args ):
             print '* Using {} permuted matrix files'.format(len(permuted_files))
 
     #Enumeration
+    method = nameToMethod[args.method]
     if args.search_strategy == 'Enumerate':
         if args.verbose > 0: print ('-' * 31), 'Enumerating Sets', ('-' * 31)
-        for k in set( args.gene_set_sizes ): # we don't need to enumerate the same size more than once
+        for k in sorted(set( args.gene_set_sizes )): # we don't need to enumerate the same size more than once
             # Create a list of sets to test
             sets = list( frozenset(t) for t in combinations(genes, k) )
             num_sets = len(sets)
@@ -182,19 +187,69 @@ def run( args ):
             if args.verbose  > 0: print 'k={}: {} sets...'.format(k, num_sets)
             if test == RCE:
                 # Run the permutational
-                setToPval, setToRuntime, setToFDR, setToObs = rce_permutation_test( sets, geneToCases, num_patients, permuted_files, args.num_cores, args.verbose )
+                setToPval, setToRuntime, setToFDR, setToObs = rce_permutation_test( sets, geneToCases, num_patients, permuted_files,
+                                                                                    args.num_cores, args.verbose )
             else:
                 # Run the test
-                method = nameToMethod[args.method]
                 setToPval, setToRuntime, setToFDR, setToObs = test_sets(sets, geneToCases, num_patients, method, test, geneToP, args.num_cores,
                                                                         verbose=args.verbose, report_invalids=args.report_invalids)
             output_enumeration_table( args, k, setToPval, setToRuntime, setToFDR, setToObs )
 
     # MCMC
     elif args.search_strategy == 'MCMC':
-        mcmc_params = dict(annotations=annotations, niters=args.num_iterations, nchains=args.num_chains, step_len=args.step_length, verbose=args.verbose, seed=args.mcmc_seed)
+        mcmc_params = dict(annotations=annotations, niters=args.num_iterations, nchains=args.num_chains,
+                           step_len=args.step_length, verbose=args.verbose, seed=args.mcmc_seed)
         setsToFreq, setToPval, setToObs = mcmc(args.gene_set_sizes, geneToCases, num_patients, method, test, geneToP, **mcmc_params)
         output_mcmc(args, setsToFreq, setToPval, setToObs)
+        
+    # Network
+    elif args.search_strategy == 'Network':
+        # Load the network and enumerate the subgraphs
+        G = load_network(args.graph_index_file, args.graph_edge_file)
+        G = G.subgraph( genes ) # restrict to mutated genes
+        
+        # Load and process the network
+        if args.verbose > 0:
+            print '-' * 34, 'Input Network', '-' * 33
+            print '- Removing self-loops and restricting to mutated genes in 2-core'
+
+        if args.verbose > 0:
+            print '- Nodes: ', G.number_of_nodes()
+            print '- Edges: ', G.number_of_edges()
+            print '- Components: ', sum( 1 for cc in nx.connected_components(G) ), '\n'
+
+        
+        # Enumerate and test all subnetworks
+        if args.verbose > 0: print '-' * 30, 'Enumerating subgraphs', '-' * 29
+        for k in sorted(set( args.gene_set_sizes )):
+            subgraphs = list(enumerate_subgraphs(G, k))
+            if args.verbose > 0: print '- k={}: {} subnetworks'.format(k, len(subgraphs))
+
+            # Test all enumerated subgraphs
+            setToPval, setToRuntime, setToFDR, setToObs = test_sets(subgraphs, geneToCases, num_patients, method, test, geneToP,
+                                                                    num_cores=args.num_cores, verbose=args.verbose,
+                                                                    report_invalids=args.report_invalids)
+            output_enumeration_table( args, k, setToPval, setToRuntime, setToFDR, setToObs )
+
+    # Test sets passed in from file
+    elif args.search_strategy == 'File':
+        if args.verbose > 0: print '-' * 28, 'Testing given gene sets', '-' * 28
+                
+        # Load the sets from file, restricting to those where each gene is mutated
+        with open(args.gene_set_file, 'r') as IN:
+            gene_sets          = [ frozenset(l.rstrip('\n').split('\t')[0].split(', ')) for l in IN if not l.startswith('#') ]
+            testable_gene_sets = [ M for M in gene_sets if len(M-genes) == 0 ]
+            k                  = len(gene_sets[0])
+
+        if args.verbose > 0:
+            print '\t- {}/{} gene sets include only mutated genes'.format(len(testable_gene_sets), len(gene_sets))
+
+        # Test the given gene sets and output
+        setToPval, setToRuntime, setToFDR, setToObs = test_sets(testable_gene_sets, geneToCases, num_patients, method, test, geneToP,
+                                                                    num_cores=args.num_cores, verbose=args.verbose,
+                                                                    report_invalids=args.report_invalids)
+        output_enumeration_table( args, k, setToPval, setToRuntime, setToFDR, setToObs )
+            
     else:
         raise NotImplementedError("Strategy '{}' not implemented.".format(args.strategy))
 
