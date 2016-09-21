@@ -22,3 +22,8 @@ testToName = { RE: "RE", WRE: "WRE", RCE: "RCE"}
 nameToTest = dict(RE=RE, WRE=WRE, RCE=RCE)
 TESTS      = set(testToName.keys())
 TEST_NAMES = set(testToName.values())
+
+# Different conditions for the test
+EXCLUSIVITY = 0
+SUBTYPE     = 1
+CONDITIONS  = set([EXCLUSIVITY, SUBTYPE])

@@ -5,7 +5,8 @@ from scipy.stats import norm
 import itertools
 from constants import *
 
-def condition(state):
+
+def exclusivity_condition(state):
 
     # Define a success condition for each state, e.g., mutual exclusivity.
 
@@ -14,28 +15,41 @@ def condition(state):
     else:
         return False
 
-def enumeration(k):
+def subtype_condition(state):
+
+    # Define a success condition for each state, e.g., mutual exclusivity.
+    if sum(state) == 2 and state[-1] == 1:
+        return True
+    else:
+        return False
+
+conditionToFn = {
+    EXCLUSIVITY: exclusivity_condition,
+    SUBTYPE: subtype_condition
+    }
+
+def enumeration(k, condition=exclusivity_condition):
 
     # Enumerate the states for the observed variables and identify the indices for the states that
     # satisfy the given condition, e.g., mutual exclusivity.
 
-    states = list(itertools.product([0, 1], repeat=k))
+    states = list(itertools.product([0, 1], repeat=k)) # possible assignments of {0,1} for each gene
 
-    indices = []
+    indices = [] # 
     for i, state in enumerate(states):
-        a = [j for j, s in enumerate(state) if s==1]
+        a = [j for j, s in enumerate(state) if s==1] # which genes are 1 (mutated)?
         if condition(state):
-            a += [k]
+            a += [k] # condition satisfied?
         indices.append(a)
 
     # Identify the indices for each term of the gradient vector and the Hessian matrix.
-    
-    gradient_indices = []
+
+    gradient_indices = [] # k + 1 indices gradient
     for i in range(k+1):
         b = [j for j, a in enumerate(indices) if i in a]
         gradient_indices.append(b)
 
-    hessian_indices = []
+    hessian_indices = [] # k x k+1 indices for hessian
     for i in range(k+1):
         b = []
         for j in range(k+1):
@@ -45,15 +59,14 @@ def enumeration(k):
         
     return states, indices, gradient_indices, hessian_indices
                                                                                                                                                                      
-def saddlepoint(observed_t, observed_y, probabilities, verbose=False):
+def saddlepoint(observed_t, observed_y, probabilities, condition=EXCLUSIVITY, verbose=False):
 
     # Find the dimensions of the observations.
 
     k, n = np.shape(probabilities)
 
     # Enumerate the states for the observed variables and identify indices for the terms.
-    
-    states, indices, gradient_indices, hessian_indices = enumeration(k)
+    states, indices, gradient_indices, hessian_indices = enumeration(k, conditionToFn[condition])
 
     # Collect the observations and perform the continuity correction for t.
 
