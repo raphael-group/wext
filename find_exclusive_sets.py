@@ -24,7 +24,7 @@ def get_parser():
 
     # Search strategy
     parser.add_argument('-s', '--search_strategy', type=str, choices=['Enumerate', 'MCMC', 'Network', 'File'], required=True)
-    parser.add_argument('-ks', '--gene_set_sizes', nargs="*", type=int, required=True)
+    parser.add_argument('-ks', '--gene_set_sizes', nargs="*", type=int, required=False)
     parser.add_argument('-N', '--num_iterations', type=int, default=pow(10, 3))
     parser.add_argument('-nc', '--num_chains', type=int, default=1)
     parser.add_argument('-sl', '--step_length', type=int, default=100)
