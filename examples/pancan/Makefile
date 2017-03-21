@@ -15,49 +15,47 @@ ifndef RANDOM_SEED
 	RANDOM_SEED=2
 endif
 
-ifndef PANCAN_NUM_SAMPLES
-	PANCAN_NUM_SAMPLES=100
+ifndef NUM_SAMPLES
+	NUM_SAMPLES=100
 endif
 
-ifndef PANCAN_NUM_GENES
-	PANCAN_NUM_GENES=50
+ifndef NUM_GENES
+	NUM_GENES=50
 endif
 
-ifndef PANCAN_BMR
-	PANCAN_BMR=0.01
+ifndef BMR
+	BMR=0.01
 endif
 
 # Directories
-REPO_DIR=$(realpath ..)
-EXAMPLES_DIR=$(realpath .)
+REPO_DIR=$(realpath ../..)
+EXAMPLES_DIR=$(realpath ..)
+EXAMPLE_DIR=$(realpath .)
 
-PANCAN_DIR=$(EXAMPLES_DIR)/pancan
-PANCAN_DATA_DIR=$(PANCAN_DIR)/data
-PANCAN_OUTPUT_DIR=$(PANCAN_DIR)/output
-
-OUTPUT_DIRS=$(PANCAN_OUTPUT_DIR)
-DATA_DIRS=$(PANCAN_DATA_DIR)
+DATA_DIR=$(EXAMPLE_DIR)/data
+OUTPUT_DIR=$(EXAMPLE_DIR)/output
 
 # Data files
-D1_ABERRATIONS=$(PANCAN_DATA_DIR)/dataset1-aberrations.tsv
-D2_ABERRATIONS=$(PANCAN_DATA_DIR)/dataset2-aberrations.tsv
+D1_ABERRATIONS=$(DATA_DIR)/dataset1-aberrations.tsv
+D2_ABERRATIONS=$(DATA_DIR)/dataset2-aberrations.tsv
 
 # Output files
-PANCAN_MUTATIONS=$(PANCAN_DATA_DIR)/pancan-dataset-mutations.json
-D1_MUTATIONS=$(PANCAN_DATA_DIR)/dataset1-mutations.json
-D2_MUTATIONS=$(PANCAN_DATA_DIR)/dataset2-mutations.json
+PANCAN_MUTATIONS=$(DATA_DIR)/pancan-dataset-mutations.json
+D1_MUTATIONS=$(DATA_DIR)/dataset1-mutations.json
+D2_MUTATIONS=$(DATA_DIR)/dataset2-mutations.json
 
-PANCAN_WEIGHTS=$(PANCAN_DATA_DIR)/pancan-dataset-weights.npy
-D1_WEIGHTS=$(PANCAN_DATA_DIR)/dataset1-weights.npy
-D2_WEIGHTS=$(PANCAN_DATA_DIR)/dataset2-weights.npy
+PANCAN_WEIGHTS=$(DATA_DIR)/pancan-dataset-weights.npy
+D1_WEIGHTS=$(DATA_DIR)/dataset1-weights.npy
+D2_WEIGHTS=$(DATA_DIR)/dataset2-weights.npy
 
-PANCAN_ACROSS_SETS=$(PANCAN_OUTPUT_DIR)/pancan-across-sets
-PANCAN_BETWEEN_SETS=$(PANCAN_OUTPUT_DIR)/pancan-between-sets
+PANCAN_ACROSS_SETS=$(OUTPUT_DIR)/pancan-across-sets
+PANCAN_BETWEEN_SETS=$(OUTPUT_DIR)/pancan-between-sets
 
 # Scripts
 PROCESS_MUTATIONS=$(REPO_DIR)/process_mutations.py
 COMPUTE_MUT_PROBS=$(REPO_DIR)/compute_mutation_probabilities.py
 FIND_EXCLUSIVE_SETS=$(REPO_DIR)/find_exclusive_sets.py
+GENERATE_DATA=$(EXAMPLES_DIR)/generate_data.py
 
 ###############################################################################
 # GENERAL COMMANDS (MAKE ALL EXAMPLES)
@@ -65,10 +63,10 @@ FIND_EXCLUSIVE_SETS=$(REPO_DIR)/find_exclusive_sets.py
 all: pancan
 
 setup:
-	mkdir -p $(OUTPUT_DIRS) $(DATA_DIRS)
+	mkdir -p $(OUTPUT_DIR) $(DATA_DIR)
 
 clean:
-	rm -r $(PANCAN_DIR)
+	rm -r $(OUTPUT_DIR) $(DATA_DIR)
 
 ###############################################################################
 # PAN-CANCER COMMANDS
@@ -76,15 +74,15 @@ clean:
 pancan: $(PANCAN_ACROSS_SETS)-k$K.tsv $(PANCAN_BETWEEN_SETS)-k$K.tsv
 
 # Generate the Pan-Cancer datasets
-pancan-aberrations: $(PANCAN_DATA_DIR)/dataset%-aberrations.tsv
-$(PANCAN_DATA_DIR)/dataset%-aberrations.tsv: | setup
-	python generate_data.py \
+pancan-aberrations: $(DATA_DIR)/dataset%-aberrations.tsv
+$(DATA_DIR)/dataset%-aberrations.tsv: | setup
+	python $(GENERATE_DATA) \
 		-rs $(RANDOM_SEED) \
-		-o $(PANCAN_DATA_DIR)/dataset \
+		-o $(DATA_DIR)/dataset \
 		pancan \
-		-ns $(PANCAN_NUM_SAMPLES) \
-		-ng $(PANCAN_NUM_GENES) \
-		-b $(PANCAN_BMR)
+		-ns $(NUM_SAMPLES) \
+		-ng $(NUM_GENES) \
+		-b $(BMR)
 
 # Process the mutation events files into separate and combined mutation datasets
 pancan-mutations: $(PANCAN_MUTATIONS) $(D1_MUTATIONS) $(D2_MUTATIONS)
