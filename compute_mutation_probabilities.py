@@ -59,7 +59,6 @@ def postprocess_weight_matrix(P, r, s):
 
     # Average weights over entries of weight matrix with same marginals
     P_mean = np.zeros(np.shape(P))
-    print np.shape(P)
     for marginals, indices in marginals_to_indices.items():
         mean_value = float(sum(P[i, j] for i, j in indices))/float(len(indices))
         for i, j in indices:
@@ -127,16 +126,19 @@ def run( args ):
         if args.verbose > 0:
             print '* Saving weights file...'
 
+        # Allow for small accumulated numerical errors
+        tol = 100*len(results)*np.finfo(np.float64).eps
+
         # Merge the observeds
         observeds = [ observed for observed, _ in results ]
         P = np.add.reduce(observeds) / float(len(observeds))
 
         # Verify the weights
         for g, obs in geneToObserved.iteritems():
-            assert( np.abs(P[geneToIndex[g]-1].sum() - obs) < 0.1)
+            assert( np.abs(P[geneToIndex[g]-1].sum() - obs) < tol)
 
         for p, obs in patientToObserved.iteritems():
-            assert( np.abs(P[:, patientToIndex[p]-1].sum() - obs) < 0.1)
+            assert( np.abs(P[:, patientToIndex[p]-1].sum() - obs) < tol)
 
         # Construct mutation matrix to compute marginals
         A = np.zeros(np.shape(P), dtype=np.int)
@@ -150,12 +152,12 @@ def run( args ):
 
         # Verify the weights again
         for g, obs in geneToObserved.iteritems():
-            assert( np.abs(P[geneToIndex[g]-1].sum() - obs) < 0.1)
+            assert( np.abs(P[geneToIndex[g]-1].sum() - obs) < tol)
 
         for p, obs in patientToObserved.iteritems():
-            assert( np.abs(P[:, patientToIndex[p]-1].sum() - obs) < 0.1)
+            assert( np.abs(P[:, patientToIndex[p]-1].sum() - obs) < tol)
 
-        # Add pseudocounts to entries with no mutations observed; unlikely except when very few permutations
+        # Add pseudocounts to entries with no mutations observed; unlikely or impossible after post-processing step
         P[P == 0] = 1./(2. * args.num_permutations)
 
         # Output to file.
