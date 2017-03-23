@@ -32,7 +32,7 @@ def load_json_files(( json_files )):
                 setToCount[frozen_M]   += int(round(pval * args.batch_size))
                 setToRuntime[frozen_M] += obj['setToRuntime'][M]
                 setToObs[frozen_M]      = obj['setToObs'][M]
-                    
+
         num_permutations += args.batch_size
 
     return setToCount, setToRuntime, setToObs, num_permutations
@@ -69,7 +69,7 @@ for counts, runtimes, obs, N in results:
     for M, count in counts.iteritems():
         setToCount[M]   += count
         setToRuntime[M] += runtimes[M]
-    
+
 setToPval = dict( (M, count/num_permutations) for M, count in setToCount.iteritems() )
 
 print '\t- Loaded {} sets with {} permutations'.format(len(setToPval), int(num_permutations))
@@ -78,7 +78,7 @@ print '\t- Loaded {} sets with {} permutations'.format(len(setToPval), int(num_p
 print '* Computing FDRs...'
 tested_sets = setToPval.keys()
 pvals       = [ setToPval[M] for M in tested_sets ]
-setToFDR    = dict(zip(tested_sets, benjamini_hochberg_correction(pvals, independent=False)))
+setToFDR    = dict(zip(tested_sets, multiple_hypothesis_correction(pvals, method="BY")))
 
 # Output the merged file
 print '* Outputting to file...'

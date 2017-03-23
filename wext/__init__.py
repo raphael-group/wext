@@ -2,7 +2,7 @@
 
 # Import modules.
 from constants import *
-from benjamini_hochberg import *
+from statistics import *
 from i_o import *
 from enumerate_sets import *
 from mcmc import mcmc
