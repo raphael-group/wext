@@ -9,7 +9,7 @@ from math import ceil, isnan
 # Load local modules
 from exclusivity_tests import wre_test, re_test
 from constants import *
-from benjamini_hochberg import benjamini_hochberg_correction
+from statistics import multiple_hypothesis_correction
 
 ################################################################################
 # Permutational test
@@ -84,7 +84,7 @@ def rce_permutation_test(sets, geneToCases, num_patients, permuted_files, num_co
     # Compute FDRs
     tested_sets = setToPval.keys()
     pvals = [ setToPval[M] for M in tested_sets ]
-    setToFDR = dict(zip(tested_sets, benjamini_hochberg_correction(pvals, independent=False)))
+    setToFDR = dict(zip(tested_sets, multiple_hypothesis_correction(pvals, method="BY")))
 
     return setToPval, setToTime, setToFDR, setToObs
 
@@ -193,7 +193,7 @@ def test_sets( sets, geneToCases, num_patients, method, test, P=None, num_cores=
             X, T, Z, tbl = setToObs[M]
             invalid_rows.append([ ','.join(sorted(M)), T, Z, tbl, setToPval[M] ])
         sys.stderr.write( '\t' + '\n\t '.join([ '\t'.join(map(str, row)) for row in invalid_rows ]) + '\n' )
-    
+
     setToPval = dict( (M, pval) for M, pval in setToPval.iteritems() if not M in invalid_sets )
     setToTime = dict( (M, runtime) for M, runtime in setToTime.iteritems() if not M in invalid_sets )
     setToObs = dict( (M, obs) for M, obs in setToObs.iteritems() if not M in invalid_sets )
@@ -206,7 +206,7 @@ def test_sets( sets, geneToCases, num_patients, method, test, P=None, num_cores=
     # Compute the FDRs
     tested_sets = setToPval.keys()
     pvals = [ setToPval[M] for M in tested_sets ]
-    setToFDR = dict(zip(tested_sets, benjamini_hochberg_correction(pvals, independent=False)))
+    setToFDR = dict(zip(tested_sets, multiple_hypothesis_correction(pvals, method="BY")))
 
     return setToPval, setToTime, setToFDR, setToObs
 
