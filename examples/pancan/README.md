@@ -18,7 +18,7 @@ The datasets also include other genes that are mutated in each sample at a fixed
 
 ### Usage ###
 
-Run `make` to process the mutations, compute mutation probabilities, and run the WRE test in both modes described above. You can find the two output TSV files in `output/`. Running on a single core, the example takes approximately 23 seconds.
+Run `make` to process the mutations, compute mutation probabilities, and run the WRE test in both modes described above. You can find the two output TSV files in `output/`. 
 
 You can pass in a few optional parameters to `make`, including:
 * `K`: gene set size (default: 2)
@@ -32,4 +32,6 @@ For example, to run the example searching for sets of size three with 100 permut
 
     make K=3 NP=100
 
-The easiest way to interpret the results is to compare the "between" set `(G3, G4)` P-value in the two output files in `output/`. The P-value for `(G3, G4)` should be lower in the "across" output file.
+Both these examples -- using `K=2` or `K=3` -- take less than a minute when running on a single core on a modern machine.
+
+The easiest way to interpret the results is to compare the set P-value `(G3, G4)` with between exclusivity in the two output files in `output/`. The P-value for `(G3, G4)` should be smaller (more significant) in the "between" output file.
