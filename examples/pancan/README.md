@@ -34,4 +34,4 @@ For example, to run the example searching for sets of size three with 100 permut
 
 Both these examples -- using `K=2` or `K=3` -- take less than 5 minutes when running on a single core on a modern machine.
 
-The easiest way to interpret the results is to compare the set P-value `(G3, G4)` with between exclusivity in the two output files in `output/`. The P-value for `(G3, G4)` should be smaller (more significant) in the "between" output file.
+The easiest way to interpret the results is to compare the set P-value `(G3, G4)` with between exclusivity in the two output files in `output/`. The P-value for `(G3, G4)` should be smaller (more significant) in the "between" output file than the P-value for `(G3, G4)` in the "across" output file.
