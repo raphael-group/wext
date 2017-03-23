@@ -48,6 +48,25 @@ def permute_matrices(edge_list, max_swaps, max_tries, seeds, verbose,
 
     return observed/float(len(seeds)), permutations
 
+def postprocess_weight_matrix(P, r, s):
+    assert np.shape(P)==(len(r), len(s))
+
+    # Find indices corresponding to entries of weight matrix with same marginals
+    marginals_to_indices = defaultdict(list)
+    for i, r_i in enumerate(r):
+        for j, s_j in enumerate(s):
+            marginals_to_indices[(r_i, s_j)].append((i, j))
+
+    # Average weights over entries of weight matrix with same marginals
+    P_mean = np.zeros(np.shape(P))
+    print np.shape(P)
+    for marginals, indices in marginals_to_indices.items():
+        mean_value = float(sum(P[i, j] for i, j in indices))/float(len(indices))
+        for i, j in indices:
+            P_mean[i, j] = mean_value
+
+    return P_mean
+
 def run( args ):
     # Do some additional argument checking
     if not args.weights_file and not args.permutation_directory:
@@ -119,7 +138,24 @@ def run( args ):
         for p, obs in patientToObserved.iteritems():
             assert( np.abs(P[:, patientToIndex[p]-1].sum() - obs) < 0.1)
 
-        # Add pseudocounts to entries with no mutations observed
+        # Construct mutation matrix to compute marginals
+        A = np.zeros(np.shape(P), dtype=np.int)
+        for i, j in edge_list:
+            A[i-1, j-1] = 1
+        r = np.sum(A, 1)
+        s = np.sum(A, 0)
+
+        # Post-process weight matrix to assign same weight to entries with same marginals
+        P = postprocess_weight_matrix(P, r, s)
+
+        # Verify the weights again
+        for g, obs in geneToObserved.iteritems():
+            assert( np.abs(P[geneToIndex[g]-1].sum() - obs) < 0.1)
+
+        for p, obs in patientToObserved.iteritems():
+            assert( np.abs(P[:, patientToIndex[p]-1].sum() - obs) < 0.1)
+
+        # Add pseudocounts to entries with no mutations observed; unlikely except when very few permutations
         P[P == 0] = 1./(2. * args.num_permutations)
 
         # Output to file.
