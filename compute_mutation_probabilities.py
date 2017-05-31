@@ -106,7 +106,7 @@ def run( args ):
     seeds = [ i+args.start_index for i in range(args.num_permutations) ]
 
     # Run the bipartite edge swaps in parallel if more than one core indicated
-    num_cores = args.num_cores if args.num_cores != -1 else mp.cpu_count()
+    num_cores = min(args.num_cores if args.num_cores != -1 else mp.cpu_count(), args.num_permutations)
     if num_cores != 1:
         pool = mp.Pool(num_cores)
         map_fn = pool.map
@@ -127,7 +127,7 @@ def run( args ):
             print '* Saving weights file...'
 
         # Allow for small accumulated numerical errors
-        tol = 100*len(results)*np.finfo(np.float64).eps
+        tol = 1e3*max(m, n)*args.num_permutations*np.finfo(np.float64).eps
 
         # Merge the observeds
         observeds = [ observed for observed, _ in results ]
