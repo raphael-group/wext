@@ -73,7 +73,7 @@ def load_weight_files(weights_files, genes, patients, typeToGeneIndex, typeToPat
         ty_genes               = set(typeToGeneIndex[i].keys()) & genes
         ty_gene_indices        = [ typeToGeneIndex[i][g] for g in ty_genes ]
         master_gene_indices    = [ masterGeneToIndex[g] for g in ty_genes ]
-        
+
         ty_patients            = set(typeToPatientIndex[i].keys()) & patients
         ty_patient_indices     = [ typeToPatientIndex[i][p] for p in ty_patients ]
         master_patient_indices = [ masterPatientToIndex[p] for p in ty_patients ]
@@ -89,7 +89,7 @@ def load_weight_files(weights_files, genes, patients, typeToGeneIndex, typeToPat
     # Set any zero entries to the minimum (pseudocount). The only reason for zeros is if
     #  a gene wasn't mutated at all in a particular dataset.
     P[P == 0] = np.min(P[P > 0])
-    
+
     return dict( (g, P[masterGeneToIndex[g]]) for g in genes )
 
 def load_mutation_files(mutation_files):
@@ -131,7 +131,7 @@ def run( args ):
     geneToCases = dict( (g, cases) for g, cases in geneToCases.iteritems() if g in genes and len(cases) >= args.min_frequency )
     genes     = set(geneToCases.keys())
     num_genes = len(genes)
-    
+
     # Load patient annotations (if provided) and add per patient events
     if args.patient_annotation_file:
         annotationToPatients = load_patient_annotation_file(args.patient_annotation_file)
@@ -192,6 +192,7 @@ def run( args ):
 
     # MCMC
     elif args.search_strategy == 'MCMC':
+        method = nameToMethod[args.method]
         mcmc_params = dict(annotations=annotations, niters=args.num_iterations, nchains=args.num_chains, step_len=args.step_length, verbose=args.verbose, seed=args.mcmc_seed)
         setsToFreq, setToPval, setToObs = mcmc(args.gene_set_sizes, geneToCases, num_patients, method, test, geneToP, **mcmc_params)
         output_mcmc(args, setsToFreq, setToPval, setToObs)
