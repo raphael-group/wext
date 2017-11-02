@@ -5,29 +5,16 @@ from scipy.stats import norm
 import itertools
 from constants import *
 
-def check_condition(state, condition):
+def condition(state):
 
     # Define a success condition for each state, e.g., mutual exclusivity.
 
-    if condition=='exclusivity':
-        if sum(state)==1:
-            return True
-        else:
-            return False
-    elif condition=='any-co-occurrence':
-        if sum(state)>1:
-            return True
-        else:
-            return False
-    elif condition=='all-co-occurrence':
-        if sum(state)==len(state):
-            return True
-        else:
-            return False
+    if sum(state)==1:
+        return True
     else:
-        raise NotImplementedError('{} not implemented'.format(condition))
+        return False
 
-def enumeration(k, condition):
+def enumeration(k):
 
     # Enumerate the states for the observed variables and identify the indices for the states that
     # satisfy the given condition, e.g., mutual exclusivity.
@@ -37,12 +24,12 @@ def enumeration(k, condition):
     indices = []
     for i, state in enumerate(states):
         a = [j for j, s in enumerate(state) if s==1]
-        if check_condition(state, condition):
+        if condition(state):
             a += [k]
         indices.append(a)
 
     # Identify the indices for each term of the gradient vector and the Hessian matrix.
-
+    
     gradient_indices = []
     for i in range(k+1):
         b = [j for j, a in enumerate(indices) if i in a]
@@ -55,18 +42,18 @@ def enumeration(k, condition):
             c = [l for l, a in enumerate(indices) if i in a and j in a]
             b.append(c)
         hessian_indices.append(b)
-
+        
     return states, indices, gradient_indices, hessian_indices
-
-def saddlepoint(observed_t, observed_y, probabilities, condition='exclusivity'):
+                                                                                                                                                                     
+def saddlepoint(observed_t, observed_y, probabilities, verbose=False):
 
     # Find the dimensions of the observations.
 
     k, n = np.shape(probabilities)
 
     # Enumerate the states for the observed variables and identify indices for the terms.
-
-    states, indices, gradient_indices, hessian_indices = enumeration(k, condition)
+    
+    states, indices, gradient_indices, hessian_indices = enumeration(k)
 
     # Collect the observations and perform the continuity correction for t.
 

@@ -7,7 +7,7 @@ from collections import defaultdict, Counter
 from math import ceil, isnan
 
 # Load local modules
-from exclusivity_tests import wre_test, re_test, general_wre_test
+from exclusivity_tests import wre_test, re_test
 from constants import *
 from statistics import multiple_hypothesis_correction
 
@@ -169,87 +169,6 @@ def test_sets( sets, geneToCases, num_patients, method, test, P=None, num_cores=
     args = [ (sets[i::num_cores], geneToCases, num_patients, method, test, P, verbose)
              for i in range(num_cores) ]
     results = map_fn(test_set_group_wrapper, args)
-
-    if num_cores != 1:
-        pool.close()
-        pool.join()
-
-    # Combine the dictionaries
-    setToPval, setToTime, setToObs = dict(), dict(), dict()
-    for pval, time, obs in results:
-        setToPval.update(pval.items())
-        setToTime.update(time.items())
-        setToObs.update(obs.items())
-
-    # Make sure all P-values are numbers
-    tested_sets = len(setToPval)
-    invalid_sets = set( M for M, pval in setToPval.iteritems() if isnan(pval) or -PTOL > pval or pval > 1+PTOL )
-
-    # Report invalid sets
-    if verbose > 0 and report_invalids:
-        sys.stderr.write('- Found {} sets with invalid P-values\n'.format(len(invalid_sets)))
-        invalid_rows = []
-        for M in invalid_sets:
-            X, T, Z, tbl = setToObs[M]
-            invalid_rows.append([ ','.join(sorted(M)), T, Z, tbl, setToPval[M] ])
-        sys.stderr.write( '\t' + '\n\t '.join([ '\t'.join(map(str, row)) for row in invalid_rows ]) + '\n' )
-
-    setToPval = dict( (M, pval) for M, pval in setToPval.iteritems() if not M in invalid_sets )
-    setToTime = dict( (M, runtime) for M, runtime in setToTime.iteritems() if not M in invalid_sets )
-    setToObs = dict( (M, obs) for M, obs in setToObs.iteritems() if not M in invalid_sets )
-
-    if verbose > 0:
-        print '- Output {} sets'.format(len(setToPval))
-        print '\tRemoved {} sets with NaN or invalid P-values'.format(len(invalid_sets))
-        print '\tIgnored {} sets with Z >= T or a gene with no exclusive mutations'.format(len(sets)-tested_sets)
-
-    # Compute the FDRs
-    tested_sets = setToPval.keys()
-    pvals = [ setToPval[M] for M in tested_sets ]
-    setToFDR = dict(zip(tested_sets, multiple_hypothesis_correction(pvals, method="BY")))
-
-    return setToPval, setToTime, setToFDR, setToObs
-
-# Test the given sets with the given method and test
-def general_test_set_group_wrapper(args): return general_test_set_group(*args)
-def general_test_set_group( sets, geneToCases, num_patients, method, test, statistic, P=None, verbose=0 ):
-    # Construct the arguments to test each set
-    setToPval, setToTime, setToObs = dict(), dict(), dict()
-    num_sets = len(sets)
-    k = len(next(iter(sets)))
-    for i, M in enumerate(sets):
-        # Simple progress bar
-        if verbose > 1:
-            sys.stdout.write('\r* Testing {}/{} triples...'.format(i+1, num_sets))
-            sys.stdout.flush()
-
-        # Do some simple mutation processing
-        sorted_M = sorted(M)
-        X, T, Z, tbl = setToObs[M] = observed_values(sorted_M, num_patients, geneToCases )
-
-        # Compute the saddlepoint approximations
-        start = time()
-        setToPval[M] = general_wre_test( sorted_M, geneToCases, [ P[g] for g in sorted_M ], statistic )
-        setToTime[M] = time() - start
-
-    if verbose > 1: print
-
-    return setToPval, setToTime, setToObs
-
-def general_test_sets( sets, geneToCases, num_patients, method, test, statistic, P=None, num_cores=1, verbose=0,
-               report_invalids=False):
-    # Set up the multiprocessing
-    num_cores = num_cores if num_cores != -1 else mp.cpu_count()
-    if num_cores != 1:
-        pool = mp.Pool(num_cores)
-        map_fn = pool.map
-    else:
-        map_fn = map
-
-    # Split up the sets and run multiprocessing
-    args = [ (sets[i::num_cores], geneToCases, num_patients, method, test, statistic, P, verbose)
-             for i in range(num_cores) ]
-    results = map_fn(general_test_set_group_wrapper, args)
 
     if num_cores != 1:
         pool.close()

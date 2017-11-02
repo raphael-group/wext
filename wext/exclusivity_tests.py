@@ -5,7 +5,7 @@ import numpy as np
 from constants import *
 from exact import exact_test
 import cpoibin
-from saddlepoint import saddlepoint, check_condition
+from saddlepoint import saddlepoint
 from comet_exact_test import comet_exact_test
 import warnings
 
@@ -37,7 +37,7 @@ def wre_test(t, x, p, method=EXACT, verbose=0):
         # Ignore warnings
         with warnings.catch_warnings() as e:
             warnings.simplefilter("ignore")
-            p_value = saddlepoint( t, x, p )
+            p_value = saddlepoint( t, x, p, verbose )
 
     return p_value
 
@@ -57,27 +57,5 @@ def re_test(t, x, tbl, method=EXACT, verbose=0):
         k = len(x)
         assert( tbl and len(tbl) == 2**k )
         p_value, mid_p_value = comet_exact_test( k, N, tbl, 1.1 )
-
-    return p_value
-
-def general_wre_test(gene_set, geneToCases, p, condition, verbose=0):
-    gene_set_cases = [geneToCases[gene] for gene in gene_set]
-    x = [len(gene_cases) for gene_cases in gene_set_cases]
-
-    t = 0
-    for case in set.union(*gene_set_cases):
-        state = [1 if case in gene_cases else 0 for gene_cases in gene_set_cases]
-        if check_condition(state, condition):
-            t += 1
-
-    p = [ list(p_g) for p_g in p ]
-
-    # Ignore warnings
-    with warnings.catch_warnings() as e:
-        warnings.simplefilter("ignore")
-        if t > 0:
-            p_value = saddlepoint( t, x, p, condition )
-        else:
-            p_value = 1.0
 
     return p_value

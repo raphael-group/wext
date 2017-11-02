@@ -47,7 +47,7 @@ Given the mutation data, we compute the exclusivity of sets _M_ of genes with `c
 We provide scripts to run an interactive web application to view the output of `compute_exclusivity.py`, including both the mutations and mutation probabilities for each set. See [`viz/README.md`](https://github.com/raphael-group/wext/blob/master/viz/README.md) and [the wiki](https://github.com/raphael-group/wext/wiki/Visualization) for additional instructions and details.
 
 ### Testing ###
-See [a simple example](https://github.com/raphael-group/wext/tree/master/examples) for examples, including a simple example that we recommend using for testing.
+[Add testing instructions here.]
 
 ### Support ###
 
