@@ -46,7 +46,7 @@ def create_tbl_header( k ):
     return '\t'.join([ bin_format.format(i) for i in range(2**k) ])
 
 # Output a run to file as a table or JSON file
-def output_enumeration_table(args, k, setToPval, setToRuntime, setToFDR, setToObs ):
+def output_enumeration_table(args, k, setToPval, setToRuntime, setToFDR, setToObs, fdr_threshold=1 ):
     is_permutational = nameToTest[args.test] == RCE
     extension = 'json' if args.json_format else 'tsv'
     with open('{}-k{}.{}'.format(args.output_prefix, k, extension), 'w') as OUT:
@@ -55,9 +55,10 @@ def output_enumeration_table(args, k, setToPval, setToRuntime, setToFDR, setToOb
             # Construct the rows
             rows = []
             for M, pval in setToPval.iteritems():
-                X, T, Z, tbl = setToObs[M]
-                row = [ ', '.join(sorted(M)), pval, setToFDR[M], setToRuntime[M], T, Z ] + tbl
-                rows.append( row )
+                if setToFDR[M]<=fdr_threshold:
+                    X, T, Z, tbl = setToObs[M]
+                    row = [ ', '.join(sorted(M)), pval, setToFDR[M], setToRuntime[M], T, Z ] + tbl
+                    rows.append( row )
             rows.sort(key=lambda row: row[1]) # sort ascending by P-value
 
             # Create the header

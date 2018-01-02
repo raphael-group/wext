@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Load required modules
-import sys, os, argparse, json, numpy as np, multiprocessing as mp
+import sys, os, argparse, json, numpy as np, multiprocessing as mp, random
 from collections import defaultdict
 
 # Load the weighted exclusivity test
@@ -19,6 +19,7 @@ def get_parser():
     parser.add_argument('-si', '--start_index', type=int, required=False, default=1)
     parser.add_argument('-q', '--swap_multiplier', type=int, required=False, default=100)
     parser.add_argument('-nc', '--num_cores', type=int, required=False, default=1)
+    parser.add_argument('-s', '--seed', type=int, required=False, default=None)
     parser.add_argument('-v', '--verbose', type=int, required=False, default=1, choices=range(5))
     return parser
 
@@ -103,7 +104,9 @@ def run( args ):
     num_edges = len(edges)
     max_swaps = int(args.swap_multiplier*num_edges)
     max_tries = 10**9
-    seeds = [ i+args.start_index for i in range(args.num_permutations) ]
+    if args.seed is not None:
+        random.seed(args.seed)
+    seeds = random.sample(xrange(1, 2*10**9), args.num_permutations)
 
     # Run the bipartite edge swaps in parallel if more than one core indicated
     num_cores = min(args.num_cores if args.num_cores != -1 else mp.cpu_count(), args.num_permutations)

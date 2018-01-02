@@ -22,3 +22,11 @@ testToName = { RE: "RE", WRE: "WRE", RCE: "RCE"}
 nameToTest = dict(RE=RE, WRE=WRE, RCE=RCE)
 TESTS      = set(testToName.keys())
 TEST_NAMES = set(testToName.values())
+
+EXCLUSIVITY       = 'exclusivity'
+ANY_CO_OCCURRENCE = 'any-co-occurrence'
+ALL_CO_OCCURRENCE = 'all-co-occurrence'
+nameToStatistic   = { EXCLUSIVITY: 'exclusivity', ANY_CO_OCCURRENCE: 'any-co-occurrence', ALL_CO_OCCURRENCE: 'all-co-occurrence'}
+statisticToName   = dict(EXCLUSIVITY=EXCLUSIVITY, ANY_CO_OCCURRENCE=ANY_CO_OCCURRENCE, ALL_CO_OCCURRENCE=ALL_CO_OCCURRENCE)
+STATISTICS        = set(statisticToName.keys())
+STATISTIC_NAMES   = set(statisticToName.values())

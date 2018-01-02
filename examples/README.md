@@ -7,5 +7,6 @@ Here we provide simple examples of running WExT on simulated data for demonstrat
 Each example has its own directory and Makefile.
 
 ### Examples ###
-
-Currently, we only have an example for running WExT on Pan-Cancer data in `pancan`.  For more examples, see [our files for reproducing the experiments in the ECCB/Bioinformatics paper](https://github.com/raphael-group/wext/tree/master/experiments/eccb2016).
+We have one example for running WExT in [`simple`](https://github.com/raphael-group/wext/tree/add_test_statistics/examples/simple). We recommend using this example to test if WExT is working on your machine.
+We have another example for running WExT on Pan-Cancer data in [`pancan`](https://github.com/raphael-group/wext/tree/add_test_statistics/examples/pancan).
+For more examples, see [our files for reproducing the experiments in the ECCB/Bioinformatics paper](https://github.com/raphael-group/wext/tree/master/experiments/eccb2016).

@@ -40,14 +40,18 @@ Before computing the weighted test, you need to process the input mutation data 
 
 #### Searching for exclusive sets ####
 
-Given the mutation data, we compute the exclusivity of sets _M_ of genes with `compute_exclusivity.py`. Users can choose which test (unweighted, weighted, or permutational) and, for the unweighted and weighted tests, which method (exact or saddlepoint) is used to compute the _p_-values. See [Compute exclusivity](https://github.com/raphael-group/wext/wiki/Compute-exclusivity) on the wiki for details on usage and input.
+Given the mutation data, we compute the exclusivity of mutations in sets _M_ of genes with `find_exclusive_sets.py`. Users can choose which test (unweighted, weighted, or permutational) and, for the unweighted and weighted tests, which method (exact or saddlepoint) is used to compute the _p_-values. See [Find exclusive sets](https://github.com/raphael-group/wext/wiki/Find-exclusive-sets) on the wiki for details on usage and input.
+
+#### Searching for exclusive, co-occurring, or other sets ####
+
+Given the mutation data, we compute the exclusivity, co-occurrence, or other patterns of mutations in sets _M_ of genes with `find_sets.py`.  See [Find sets](https://github.com/raphael-group/wext/wiki/Find-sets) on the wiki for details on usage and input.
 
 ### Visualization ###
 
 We provide scripts to run an interactive web application to view the output of `compute_exclusivity.py`, including both the mutations and mutation probabilities for each set. See [`viz/README.md`](https://github.com/raphael-group/wext/blob/master/viz/README.md) and [the wiki](https://github.com/raphael-group/wext/wiki/Visualization) for additional instructions and details.
 
 ### Testing ###
-[Add testing instructions here.]
+See [examples](https://github.com/raphael-group/wext/tree/master/examples) for examples, including a simple example that we recommend using for testing.
 
 ### Support ###
 
